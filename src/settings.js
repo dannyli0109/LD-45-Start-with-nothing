@@ -1,0 +1,7 @@
+const BUTTON_WIDTH = 200
+const BUTTON_HEIGHT = 50
+const WIDTH = 900
+const HEIGHT = 506.25
+const STATUS_BAR_HEIGHT = 50
+const STATUS_WIDTH = 150
+const STATE_PICK_EVENT = 1
