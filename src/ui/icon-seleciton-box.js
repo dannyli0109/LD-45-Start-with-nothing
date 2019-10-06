@@ -1,43 +1,56 @@
 class IconSelectionBox extends Box {
-    constructor(x, y, w, h, image) {
+    constructor(x, y, w, h, type) {
         super(x, y, w, h)
-        this.image = image
+        this.type = type
+        this.image = icons[type]
+
+        this.scale = 1.2
+
+        this.hoverWidth = this.w * this.scale
+        this.hoverHeight = this.h * this.scale
+
+        this.currentWidth = this.w
+        this.currentHeight = this.h
     }
 
     show() {
-        rectMode(CENTER)
+        noSmooth()
+        imageMode(CENTER)
+
+        if (this.collide()) {
+            this.currentWidth = lerp(this.currentWidth, this.hoverWidth, 0.1)
+            this.currentHeight = lerp(this.currentHeight, this.hoverHeight, 0.1)
+        } else {
+
+            this.currentWidth = lerp(this.currentWidth, this.w, 0.1)
+            this.currentHeight = lerp(this.currentHeight, this.h, 0.1)
+        }
+
         image(
             this.image,
             this.x,
             this.y,
-            this.w,
-            this.h,
+            this.currentWidth,
+            this.currentHeight,
             0,
             0,
             16,
             16
         )
-        // fill(255)
-        // if (this.collide()) {
-        //     strokeWeight(5)
-        // } else {
-        //     strokeWeight(1)
-        // }
-        // rect(this.x, this.y, this.w, this.h)
-
-        // let t = this.collide() ? this.hoverText : this.text
-        // textLeading(0)
-        // textAlign(CENTER, CENTER)
-        // textFont(font)
-        // textSize(this.fontSize)
-        // fill(0)
-        // stroke(0)
-        // strokeWeight(1)
-        // text(t, this.x + this.fontSize / 8, this.y - this.fontSize / 8, this.w, this.h)
     }
 
     pressed() {
         if (!this.collide()) return
-        sceneManager.next()
+        switch (this.type) {
+            case EVENT:
+                currentScene.events.push(sceneManager.events[0]())
+                currentScene.index++
+                // sceneManager.next()
+                break;
+            default:
+                break;
+        }
+        // console.log(this.type)
+        // sceneManager.next()
     }
 }

@@ -6,13 +6,18 @@ var currentScene;
 var sceneManager;
 var player; // icons
 
-var iconBattle, iconEvent, iconOpportunity;
+var iconBattle, iconEvent, iconOpportunity, iconBoss;
+var swordImage;
+var icons = [];
 
 function preload() {
   font = loadFont('./assets/BitPotionExt.ttf');
   iconBattle = loadImage('./assets/icon-battle.png');
   iconEvent = loadImage('./assets/icon-event.png');
   iconOpportunity = loadImage('./assets/icon-opportunity.png');
+  iconBoss = loadImage('./assets/icon-boss.png');
+  swordImage = loadImage('./assets/sword.png');
+  icons.push.apply(icons, [iconBattle, iconEvent, iconOpportunity, iconBoss]);
 }
 
 function setup() {
@@ -28,10 +33,18 @@ function setup() {
 function draw() {
   background(255);
   currentScene.show();
+
+  if (sceneManager.index > 0) {
+    sceneManager.statusBar.show();
+  }
 }
 
 function mousePressed(e) {
   currentScene.pressed();
+
+  if (sceneManager.index > 0) {
+    sceneManager.statusBar.pressed();
+  }
 }
 "use strict";
 
@@ -42,6 +55,15 @@ var HEIGHT = 506.25;
 var STATUS_BAR_HEIGHT = 50;
 var STATUS_WIDTH = 150;
 var STATE_PICK_EVENT = 1;
+var BATTLE = 0;
+var EVENT = 1;
+var OPPORTUNITY = 2;
+var BOSS = 3;
+var SWORD = 0;
+var STAFF = 1;
+var DAGGER = 2;
+var NORMAL = 0;
+var RARE = 1;
 "use strict";
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -136,12 +158,23 @@ function () {
         this.dialogues[this.index].show();
       } else {
         currentScene.index++;
+
+        if (currentScene.events.length <= currentScene.index) {
+          sceneManager.next();
+        }
       }
     }
   }, {
     key: "pressed",
     value: function pressed() {
-      this.index++;
+      // this.dialogues[this.index]
+      if (!this.dialogues[this.index].collide()) return;
+
+      if (this.dialogues[this.index].atTheEnd) {
+        this.index++;
+      } else {
+        this.dialogues[this.index].atTheEnd = true;
+      }
     }
   }]);
 
@@ -163,7 +196,7 @@ function () {
         _ref$row = _ref.row,
         row = _ref$row === void 0 ? 2 : _ref$row,
         _ref$col = _ref.col,
-        col = _ref$col === void 0 ? 3 : _ref$col,
+        col = _ref$col === void 0 ? 2 : _ref$col,
         _ref$paddingX = _ref.paddingX,
         paddingX = _ref$paddingX === void 0 ? 20 : _ref$paddingX,
         _ref$paddingY = _ref.paddingY,
@@ -175,7 +208,9 @@ function () {
         _ref$buttonHeight = _ref.buttonHeight,
         buttonHeight = _ref$buttonHeight === void 0 ? BUTTON_HEIGHT : _ref$buttonHeight,
         _ref$isIcon = _ref.isIcon,
-        isIcon = _ref$isIcon === void 0 ? false : _ref$isIcon;
+        isIcon = _ref$isIcon === void 0 ? false : _ref$isIcon,
+        _ref$results = _ref.results,
+        results = _ref$results === void 0 ? [] : _ref$results;
 
     _classCallCheck(this, SelectionEvent);
 
@@ -185,6 +220,7 @@ function () {
     this.dialogues = [];
     this.selections = [];
     this.index = 0;
+    this.results = results;
     this.dialoguePortion = dialoguePortion;
     this.buttonWidth = buttonWidth;
     this.buttonHeight = buttonHeight;
@@ -195,7 +231,12 @@ function () {
     this.col = col;
     this.isIcon = isIcon;
     this.createDialogues();
-    this.createSelections();
+
+    if (this.isIcon) {
+      this.createIconSelections();
+    } else {
+      this.createSelections();
+    }
   }
 
   _createClass(SelectionEvent, [{
@@ -228,9 +269,28 @@ function () {
       });
     }
   }, {
+    key: "createIconSelections",
+    value: function createIconSelections() {
+      var _this3 = this;
+
+      this.selectionsTextArray.forEach(function (element, index) {
+        var x = index % _this3.col;
+        var y = Math.floor(index / _this3.col);
+        var dialogueHeight = _this3.height * _this3.dialoguePortion;
+        var containerHeight = _this3.height * (1 - _this3.dialoguePortion);
+        var rowHeight = containerHeight / _this3.row;
+        var shouldCenterX = index % _this3.col === 0 && _this3.selectionsTextArray.length - 1 - index === 0;
+        var shouldCenterY = Math.floor((_this3.selectionsTextArray.length - 1) / _this3.col) === 0;
+        var yCenter = containerHeight / 2 + STATUS_BAR_HEIGHT + dialogueHeight;
+        var buttonPadding = (width - _this3.buttonWidth * _this3.col - (_this3.col - 1) * _this3.paddingX) / 2;
+
+        _this3.selections.push(new IconSelectionBox(shouldCenterX ? width / 2 : buttonPadding + _this3.buttonWidth / 2 + x * (_this3.paddingX + _this3.buttonWidth), shouldCenterY ? yCenter : yCenter - rowHeight / 2 + y * rowHeight, _this3.buttonWidth, _this3.buttonHeight, element));
+      });
+    }
+  }, {
     key: "show",
     value: function show() {
-      if (this.dialogues.length - 1 >= this.index) {
+      if (this.dialogues.length - 1 > this.index) {
         this.dialogues[this.index].show();
       } else {
         this.dialogues[this.dialogues.length - 1].show();
@@ -242,7 +302,12 @@ function () {
   }, {
     key: "pressed",
     value: function pressed() {
+      var _this4 = this;
+
       this.index++;
+      this.selections.forEach(function (selection, index) {
+        selection.pressed(_this4.results[index]);
+      });
     }
   }]);
 
@@ -263,41 +328,84 @@ function () {
     _classCallCheck(this, Player);
 
     this.name = 'NOBODY';
-    this.hpMax = 1;
-    this.hp = this.hpMax;
-    this.mpMax = 0;
-    this.mp = this.mpMax;
     this.level = 0;
     this.str = 0;
     this["int"] = 0;
     this.agi = 0;
+    this.baseStr = this.str;
+    this.baseInt = this["int"];
+    this.baseAgi = this.agi;
     this.stats = [this.str, this["int"], this.agi];
-    this.money = 0;
+    this.money = 10;
     this.material = 0;
     this.mainStat = random(this.stats);
+    this.exp = 0;
+    this.levelExp = 1;
+    this.hpMax = this.str * this.str * 2 + 1;
+    this.hp = this.hpMax;
+    this.mpMax = this["int"] * this["int"] * 2;
+    this.mp = this.mpMax;
+    this.baseAttack = this.str * 2;
+    this.attack = this.baseAttack;
+    this.defence = 0;
+    this.weapon = {
+      attack: 0,
+      agi: 0,
+      str: 0,
+      "int": 0
+    };
   }
 
   _createClass(Player, [{
+    key: "equipWeapon",
+    value: function equipWeapon(weapon) {
+      this.weapon = weapon;
+      this.updateStats();
+    }
+  }, {
+    key: "gainExp",
+    value: function gainExp(amt) {
+      this.exp += amt;
+
+      if (this.exp >= this.levelExp) {
+        this.exp -= this.levelExp;
+        this.levelUp();
+      }
+    }
+  }, {
     key: "levelUp",
     value: function levelUp() {
+      // currentScene.events.push(
+      //     new DialogueEvent(
+      //         [
+      //             'Level Up!'
+      //         ]
+      //     )
+      // )
       this.level++;
-      this.stats.forEach(function (stat) {
-        stat++;
-      });
-      this.mainStat += this.level - 1;
+      this.baseStr += Math.round(random(1, this.level));
+      this.baseInt += Math.round(random(1, this.level));
+      this.baseAgi += Math.round(random(1, this.level)); // this.mainStat += (this.level - 1)
+
       this.updateStats();
     }
   }, {
     key: "updateStats",
     value: function updateStats() {
-      var newHp = this.str ^ 2 * 5;
+      this.str = this.baseStr + this.weapon.str;
+      this["int"] = this.baseInt + this.weapon["int"];
+      this.agi = this.baseAgi + this.weapon.agi;
+      this.baseAttack = this.str * 5;
+      this.attack = this.baseAttack + this.weapon.attack;
+      var newHp = this.str * this.str * 2 + 1;
       var hpDifference = newHp - this.hpMax;
       this.hpMax = newHp;
       this.hp += hpDifference;
-      var newMp = this["int"] ^ 2 * 5;
+      var newMp = this["int"] * this["int"] * 2;
       var mpDifference = newMp - this.mpMax;
       this.mpMax = newMp;
       this.mp += mpDifference;
+      this.levelExp = this.level * this.level + 1;
     }
   }]);
 
@@ -305,13 +413,41 @@ function () {
 }();
 "use strict";
 
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+var Weapon = function Weapon(type, quality) {
+  _classCallCheck(this, Weapon);
 
-function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+  this.type = type;
+  this.quality = quality;
+  this.attack = 0;
+  this.str = 0;
+  this.agi = 0;
+  this["int"] = 0;
+  this.img = swordImage;
 
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+  switch (this.type) {
+    case SWORD:
+      if (quality === RARE) {
+        this.attack = Math.round(random(3 * (player.baseStr + 1), 7 * (player.baseStr + 1))) * (player.level + 1) * Math.round(random(3, 7));
+        this.str = Math.round(random(1, 3) * 0.1 * (player.baseStr + 1));
+      } else {
+        this.attack = Math.round(random(1 * (player.baseStr + 1), 3 * (player.baseStr + 1))) * (player.level + 1) * Math.round(random(1, 3));
+      }
+
+      break;
+
+    default:
+      break;
+  }
+};
+"use strict";
+
+function isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
+function _construct(Parent, args, Class) { if (isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -323,18 +459,37 @@ var SceneManager =
 /*#__PURE__*/
 function () {
   function SceneManager() {
+    var _this = this;
+
     _classCallCheck(this, SceneManager);
 
-    this.index = 1;
+    this.index = 0;
     this.scenes = [];
+    this.statusBar = this.createStatusBar();
     this.createScenes();
+    this.events = [function () {
+      return _construct(SelectionEvent, [['You found a homeless person on the street...'], ['Give him: $' + (Math.ceil(player.money * 0.8) === 0 ? 1 : Math.ceil(player.money * 0.8)), 'No way!'], {
+        paddingX: 50,
+        results: [function () {
+          if (player.money < (Math.ceil(player.money * 0.8) === 0 ? 1 : Math.ceil(player.money * 0.8))) return;
+          player.money -= Math.ceil(player.money * 0.8);
+          currentScene.events.push(new DialogueEvent(['HOMELESS: THANK YOU SO MUCH!!!']));
+          var weapon = new Weapon(SWORD, RARE);
+          player.equipWeapon(weapon);
+          currentScene.events.push();
+          currentScene.index++;
+        }, function () {
+          _this.next();
+        }]
+      }]);
+    }];
   }
 
   _createClass(SceneManager, [{
     key: "createScenes",
     value: function createScenes() {
       this.createMainMenu();
-      this.createGameScene();
+      this.createGameScene(); // this.createGameScene()
     }
   }, {
     key: "createMainMenu",
@@ -347,10 +502,8 @@ function () {
     }
   }, {
     key: "createStatusBar",
-    value: function createStatusBar(items) {
-      return items.map(function (item, i) {
-        return new DialogueBox(STATUS_WIDTH / 2 + i * STATUS_WIDTH, STATUS_BAR_HEIGHT / 2, STATUS_WIDTH, STATUS_BAR_HEIGHT, item, 0);
-      });
+    value: function createStatusBar() {
+      return new StatusBar();
     }
   }, {
     key: "createStatsCol",
@@ -364,12 +517,46 @@ function () {
   }, {
     key: "createGameScene",
     value: function createGameScene() {
-      var elements = [];
-      elements.push.apply(elements, _toConsumableArray(this.createStatusBar([player.name, 'Level: ' + player.level, 'HP: ' + player.hp + ' / ' + player.hpMax, 'MP: ' + player.mp + ' / ' + player.mpMax, '$: ' + player.money, 'Material: ' + player.material])));
-      elements.push.apply(elements, _toConsumableArray(this.createStatsCol(['STR: ' + player.str, 'INT: ' + player["int"], 'AGI: ' + player.agi])));
+      var elements = []; // elements.push(this.createStatusBar())
+      // elements.push(...this.createStatsCol([
+      //     'STR: ' + player.str,
+      //     'INT: ' + player.int,
+      //     'AGI: ' + player.agi
+      // ]))
+
       var events = [];
       events.push(new DialogueEvent(['You have NOTHING...', 'You don\'t know where you are...', 'You are weak...', 'Even the weakest slime kills you in one hit...', 'But you want to stay alive...', 'To find the purpose of your pathetic life...', 'You walk and walk around this place...', 'After some time, you found serval paths in front of you...']));
-      events.push(new SelectionEvent(['You are gonna choose...'], ['BATTLE', 'EVENT', 'CHANCE']));
+      events.push(new SelectionEvent(['You are gonna choose...'], [BATTLE, EVENT, OPPORTUNITY, BOSS], {
+        isIcon: true,
+        col: 4,
+        buttonWidth: 64,
+        buttonHeight: 64,
+        paddingX: 50
+      }));
+      var scene = new Scene(this.scenes.length, elements);
+      scene.events = events;
+      this.scenes.push(scene);
+    }
+  }, {
+    key: "createIconSelection",
+    value: function createIconSelection() {
+      var elements = [];
+      var events = [];
+      var amountOfChoices = Math.round(random(1, 4));
+      var allE = [BATTLE, EVENT, OPPORTUNITY, BOSS];
+      var e = [];
+
+      for (var i = 0; i < amountOfChoices; i++) {
+        e.push(random(allE));
+      }
+
+      events.push(new SelectionEvent(['Make another choice...'], e, {
+        isIcon: true,
+        col: amountOfChoices,
+        buttonWidth: 64,
+        buttonHeight: 64,
+        paddingX: 50
+      }));
       var scene = new Scene(this.scenes.length, elements);
       scene.events = events;
       this.scenes.push(scene);
@@ -378,6 +565,12 @@ function () {
     key: "next",
     value: function next() {
       this.index++;
+
+      if (this.scenes.length <= this.index) {
+        player.gainExp(1);
+        this.createIconSelection();
+      }
+
       currentScene = this.scenes[this.index];
     }
   }]);
@@ -443,7 +636,10 @@ function () {
       this.elements.forEach(function (element) {
         element.pressed();
       });
-      this.events[this.index].pressed();
+
+      if (this.events.length > this.index) {
+        this.events[this.index].pressed();
+      }
     }
   }]);
 
@@ -586,6 +782,7 @@ function (_Box) {
     _this.hidden = false;
     _this.index = 0;
     _this.frame = 0;
+    _this.atTheEnd = false;
     return _this;
   }
 
@@ -607,10 +804,11 @@ function (_Box) {
 
       if (this.frame % 2 === 0) {
         this.index++;
+      }
 
-        if (this.index > this.text.split('').length) {
-          this.index = this.text.split('').length;
-        }
+      if (this.index > this.text.split('').length || this.atTheEnd) {
+        this.index = this.text.split('').length;
+        this.atTheEnd = true;
       }
 
       this.frame++; // spriteFont.showFont(this.text, this.x, this.y, this.w, this.h)
@@ -650,42 +848,55 @@ var IconSelectionBox =
 function (_Box) {
   _inherits(IconSelectionBox, _Box);
 
-  function IconSelectionBox(x, y, w, h, image) {
+  function IconSelectionBox(x, y, w, h, type) {
     var _this;
 
     _classCallCheck(this, IconSelectionBox);
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(IconSelectionBox).call(this, x, y, w, h));
-    _this.image = image;
+    _this.type = type;
+    _this.image = icons[type];
+    _this.scale = 1.2;
+    _this.hoverWidth = _this.w * _this.scale;
+    _this.hoverHeight = _this.h * _this.scale;
+    _this.currentWidth = _this.w;
+    _this.currentHeight = _this.h;
     return _this;
   }
 
   _createClass(IconSelectionBox, [{
     key: "show",
     value: function show() {
-      rectMode(CENTER);
-      image(this.image, this.x, this.y, this.w, this.h, 0, 0, 16, 16); // fill(255)
-      // if (this.collide()) {
-      //     strokeWeight(5)
-      // } else {
-      //     strokeWeight(1)
-      // }
-      // rect(this.x, this.y, this.w, this.h)
-      // let t = this.collide() ? this.hoverText : this.text
-      // textLeading(0)
-      // textAlign(CENTER, CENTER)
-      // textFont(font)
-      // textSize(this.fontSize)
-      // fill(0)
-      // stroke(0)
-      // strokeWeight(1)
-      // text(t, this.x + this.fontSize / 8, this.y - this.fontSize / 8, this.w, this.h)
+      noSmooth();
+      imageMode(CENTER);
+
+      if (this.collide()) {
+        this.currentWidth = lerp(this.currentWidth, this.hoverWidth, 0.1);
+        this.currentHeight = lerp(this.currentHeight, this.hoverHeight, 0.1);
+      } else {
+        this.currentWidth = lerp(this.currentWidth, this.w, 0.1);
+        this.currentHeight = lerp(this.currentHeight, this.h, 0.1);
+      }
+
+      image(this.image, this.x, this.y, this.currentWidth, this.currentHeight, 0, 0, 16, 16);
     }
   }, {
     key: "pressed",
     value: function pressed() {
       if (!this.collide()) return;
-      sceneManager.next();
+
+      switch (this.type) {
+        case EVENT:
+          currentScene.events.push(sceneManager.events[0]());
+          currentScene.index++; // sceneManager.next()
+
+          break;
+
+        default:
+          break;
+      } // console.log(this.type)
+      // sceneManager.next()
+
     }
   }]);
 
@@ -755,9 +966,14 @@ function (_Box) {
     }
   }, {
     key: "pressed",
-    value: function pressed() {
-      if (!this.collide()) return;
-      sceneManager.next();
+    value: function pressed(cb) {
+      if (!this.collide()) return; // console.log(this.type)
+
+      if (cb) {
+        cb();
+      } else {
+        sceneManager.next();
+      }
     }
   }]);
 
@@ -777,6 +993,8 @@ function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) ===
 
 function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
@@ -786,17 +1004,118 @@ var StatusBar =
 function (_Box) {
   _inherits(StatusBar, _Box);
 
-  function StatusBar(w, h) {
+  function StatusBar() {
     var _this;
 
     _classCallCheck(this, StatusBar);
 
-    return _possibleConstructorReturn(_this);
+    var x = width / 2;
+    var y = STATUS_BAR_HEIGHT / 2;
+    var w = width;
+    var h = STATUS_BAR_HEIGHT;
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(StatusBar).call(this, x, y, w, h));
+    _this.fontSize = 24;
+    _this.items = ['', '', '', '', '', ''].map(function (item) {
+      return {
+        item: item,
+        index: 0
+      };
+    });
+    _this.stats = ['', '', '', '', ''].map(function (item) {
+      return {
+        item: item,
+        index: 0
+      };
+    });
+    _this.frame = 0;
+    return _this;
   }
 
   _createClass(StatusBar, [{
+    key: "updateStatus",
+    value: function updateStatus() {
+      this.items[0].item = player.name;
+      this.items[1].item = 'Level: ' + player.level;
+      this.items[2].item = 'HP: ' + player.hp + ' / ' + player.hpMax;
+      this.items[3].item = 'MP: ' + player.mp + ' / ' + player.mpMax;
+      this.items[4].item = '$: ' + player.money;
+      this.items[5].item = 'Material: ' + player.material;
+      this.stats[0].item = 'STR: ' + player.baseStr + ' + ' + player.weapon.str;
+      this.stats[1].item = 'INT: ' + player["int"];
+      this.stats[2].item = 'AGI: ' + player.agi;
+      this.stats[3].item = 'ATTACK: ' + player.baseAttack + ' + ' + player.weapon.attack;
+      this.stats[4].item = 'DEFENCE: ' + player.defence;
+    }
+  }, {
     key: "show",
-    value: function show() {// let dialogueBox = new DialogueBox(width / 2, height / 4, width, height / 2, 'Before changing the example, it might be helpful to submit a feature request to whomever handles these kinds of issues at Mozilla/Webkit citing the noSmooth() documentation as an example of why this type of boolean control for graphics smoothing (not image smoothing) would be practical for developers.')
+    value: function show() {
+      var _this2 = this;
+
+      this.updateStatus(); // STATUS_WIDTH / 2 + i * STATUS_WIDTH, STATUS_BAR_HEIGHT / 2, STATUS_WIDTH, STATUS_BAR_HEIGHT, item, 0
+
+      this.items.forEach(function (_ref, i) {
+        var item = _ref.item,
+            index = _ref.index;
+        var x = STATUS_WIDTH / 2 + i * STATUS_WIDTH;
+        var y = STATUS_BAR_HEIGHT / 2;
+        var w = STATUS_WIDTH;
+        var h = STATUS_BAR_HEIGHT;
+
+        _this2.drawBox(x, y, w, h, item, index, i);
+
+        if (_this2.frame % 2 === 0) {
+          _this2.items[i].index++;
+        }
+      });
+
+      if (this.collide()) {
+        this.stats.forEach(function (_ref2, i) {
+          var item = _ref2.item,
+              index = _ref2.index;
+          var x = STATUS_WIDTH / 2;
+          var y = STATUS_BAR_HEIGHT / 2 + (i + 1) * STATUS_BAR_HEIGHT;
+          var w = STATUS_WIDTH;
+          var h = STATUS_BAR_HEIGHT;
+
+          _this2.drawBox(x, y, w, h, item, index, i);
+
+          if (_this2.frame % 2 === 0) {
+            _this2.stats[i].index++;
+          }
+        });
+      } else {
+        this.stats.forEach(function (_, i) {
+          _this2.stats[i].index = 0;
+        });
+      }
+
+      this.frame++; // spriteFont.showFont(this.text, this.x, this.y, this.w, this.h)
+    }
+  }, {
+    key: "drawBox",
+    value: function drawBox(x, y, w, h, item, index, i) {
+      rectMode(CENTER);
+      fill(255);
+      rect(x, y, w, h);
+      textLeading(0);
+      textAlign(CENTER, CENTER);
+      textFont(font);
+      textSize(this.fontSize);
+      fill(0);
+      stroke(0);
+      strokeWeight(1);
+      var textToShow = item.split('').slice(0, index).join('');
+      text(textToShow, x + this.fontSize / 8, y - this.fontSize / 8, w, h);
+
+      if (index > item.split('').length) {
+        index = item.split('').length;
+      }
+    }
+  }, {
+    key: "pressed",
+    value: function pressed() {
+      if (!this.collide()) return false;
+      console.log('pressed status bar');
     }
   }]);
 

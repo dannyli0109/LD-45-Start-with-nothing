@@ -1,13 +1,57 @@
 class SceneManager {
     constructor() {
-        this.index = 1
+        this.index = 0
         this.scenes = []
+        this.statusBar = this.createStatusBar()
         this.createScenes()
+
+        this.events = [
+            () => {
+                return new SelectionEvent(
+                    ...[
+                        [
+                            'You found a homeless person on the street...'
+                        ],
+                        [
+                            'Give him: $' + (Math.ceil(player.money * 0.8) === 0 ? 1 : Math.ceil(player.money * 0.8)),
+                            'No way!'
+                        ],
+                        {
+                            paddingX: 50,
+                            results: [
+                                () => {
+                                    if (player.money < (Math.ceil(player.money * 0.8) === 0 ? 1 : Math.ceil(player.money * 0.8))) return
+                                    player.money -= Math.ceil(player.money * 0.8)
+                                    currentScene.events.push(
+                                        new DialogueEvent(
+                                            [
+                                                'HOMELESS: THANK YOU SO MUCH!!!'
+                                            ]
+                                        )
+                                    )
+
+                                    let weapon = new Weapon(SWORD, RARE)
+
+                                    player.equipWeapon(weapon)
+
+                                    currentScene.events.push()
+                                    currentScene.index++
+                                },
+                                () => {
+                                    this.next()
+                                }
+                            ]
+                        }
+                    ]
+                )
+            }
+        ]
     }
 
     createScenes() {
         this.createMainMenu()
         this.createGameScene()
+        // this.createGameScene()
     }
 
     createMainMenu() {
@@ -19,10 +63,8 @@ class SceneManager {
         this.scenes.push(new Scene(this.scenes.length, elements))
     }
 
-    createStatusBar(items) {
-        return items.map((item, i) => {
-            return new DialogueBox(STATUS_WIDTH / 2 + i * STATUS_WIDTH, STATUS_BAR_HEIGHT / 2, STATUS_WIDTH, STATUS_BAR_HEIGHT, item, 0)
-        })
+    createStatusBar() {
+        return new StatusBar()
     }
 
     createStatsCol(items) {
@@ -36,20 +78,13 @@ class SceneManager {
     createGameScene() {
         let elements = []
 
-        elements.push(...this.createStatusBar([
-            player.name,
-            'Level: ' + player.level,
-            'HP: ' + player.hp + ' / ' + player.hpMax,
-            'MP: ' + player.mp + ' / ' + player.mpMax,
-            '$: ' + player.money,
-            'Material: ' + player.material
-        ]))
+        // elements.push(this.createStatusBar())
 
-        elements.push(...this.createStatsCol([
-            'STR: ' + player.str,
-            'INT: ' + player.int,
-            'AGI: ' + player.agi
-        ]))
+        // elements.push(...this.createStatsCol([
+        //     'STR: ' + player.str,
+        //     'INT: ' + player.int,
+        //     'AGI: ' + player.agi
+        // ]))
 
         let events = []
         events.push(new DialogueEvent([
@@ -63,24 +98,79 @@ class SceneManager {
             'After some time, you found serval paths in front of you...'
         ]))
 
-        events.push(new SelectionEvent([
-            'You are gonna choose...'
-        ], [
-            'BATTLE',
-            'EVENT',
-            'CHANCE'
-        ]))
+
+
+        events.push(new SelectionEvent(
+            [
+                'You are gonna choose...'
+            ],
+            [
+                BATTLE,
+                EVENT,
+                OPPORTUNITY,
+                BOSS
+            ],
+            {
+                isIcon: true,
+                col: 4,
+                buttonWidth: 64,
+                buttonHeight: 64,
+                paddingX: 50
+            }
+        ))
 
         let scene = new Scene(this.scenes.length, elements)
         scene.events = events
 
         this.scenes.push(scene)
-
-
     }
+
+    createIconSelection() {
+        let elements = []
+        let events = []
+
+        let amountOfChoices = Math.round(random(1, 4))
+        let allE = [
+            BATTLE,
+            EVENT,
+            OPPORTUNITY,
+            BOSS
+        ]
+        let e = []
+
+        for (let i = 0; i < amountOfChoices; i++) {
+            e.push(random(allE))
+        }
+
+        events.push(new SelectionEvent(
+            [
+                'Make another choice...'
+            ],
+            e,
+            {
+                isIcon: true,
+                col: amountOfChoices,
+                buttonWidth: 64,
+                buttonHeight: 64,
+                paddingX: 50
+            }
+        ))
+
+        let scene = new Scene(this.scenes.length, elements)
+        scene.events = events
+
+        this.scenes.push(scene)
+    }
+
+
+
 
     next() {
         this.index++
+        if (this.scenes.length <= this.index) {
+            player.gainExp(1)
+            this.createIconSelection()
+        }
         currentScene = this.scenes[this.index]
     }
 }

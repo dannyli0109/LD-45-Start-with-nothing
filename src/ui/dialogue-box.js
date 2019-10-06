@@ -8,6 +8,7 @@ class DialogueBox extends Box {
         this.hidden = false
         this.index = 0
         this.frame = 0
+        this.atTheEnd = false
     }
 
     show() {
@@ -29,9 +30,10 @@ class DialogueBox extends Box {
         if (this.frame % 2 === 0) {
             this.index++
 
-            if (this.index > this.text.split('').length) {
-                this.index = this.text.split('').length
-            }
+        }
+        if (this.index > this.text.split('').length || this.atTheEnd) {
+            this.index = this.text.split('').length
+            this.atTheEnd = true
         }
 
         this.frame++

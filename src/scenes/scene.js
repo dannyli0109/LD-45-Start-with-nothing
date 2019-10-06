@@ -37,6 +37,8 @@ class Scene {
             element.pressed()
         })
 
-        this.events[this.index].pressed()
+        if (this.events.length > this.index) {
+            this.events[this.index].pressed()
+        }
     }
 }

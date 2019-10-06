@@ -29,8 +29,13 @@ class SelectionBox extends Box {
         text(t, this.x + this.fontSize / 8, this.y - this.fontSize / 8, this.w, this.h)
     }
 
-    pressed() {
+    pressed(cb) {
         if (!this.collide()) return
-        sceneManager.next()
+        // console.log(this.type)
+        if (cb) {
+            cb()
+        } else {
+            sceneManager.next()
+        }
     }
 }

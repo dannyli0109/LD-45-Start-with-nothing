@@ -18,10 +18,20 @@ class DialogueEvent {
             this.dialogues[this.index].show()
         } else {
             currentScene.index++
+            if (currentScene.events.length <= currentScene.index) {
+                sceneManager.next()
+            }
         }
     }
 
     pressed() {
-        this.index++
+        // this.dialogues[this.index]
+        if (!this.dialogues[this.index].collide()) return
+
+        if (this.dialogues[this.index].atTheEnd) {
+            this.index++
+        } else {
+            this.dialogues[this.index].atTheEnd = true
+        }
     }
 }
