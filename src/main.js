@@ -48,6 +48,9 @@ function setup() {
 
 function initGame() {
     player = new Player()
+    player.weapon = new Weapon()
+    player.armor = new Armor()
+    player.updateStats()
     sceneManager = new SceneManager()
     currentScene = sceneManager.scenes[sceneManager.index]
 }

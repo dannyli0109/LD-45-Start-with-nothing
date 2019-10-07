@@ -1,5 +1,5 @@
-const BUTTON_WIDTH = 200
-const BUTTON_HEIGHT = 50
+const BUTTON_WIDTH = 250
+const BUTTON_HEIGHT = 70
 const WIDTH = 900
 const HEIGHT = 506.25
 const STATUS_BAR_HEIGHT = 50

@@ -18,9 +18,9 @@ class Player {
         this.exp = 0
         this.levelExp = 1
 
-        this.hpMax = this.str * this.str * 2 + 1
+        this.hpMax = this.str * 2 + 1
         this.hp = this.hpMax
-        this.mpMax = this.int * this.int * 2
+        this.mpMax = this.int * 2 + 1
         this.mp = this.mpMax
 
         this.baseAttack = this.str * 2
@@ -28,9 +28,9 @@ class Player {
         this.attack = this.baseAttack
         this.defence = 0
 
-        this.weapon = new Weapon()
-        this.armor = new Armor()
-        this.updateStats()
+        this.weapon = false
+        this.armor = false
+        // this.updateStats()
     }
 
     equipWeapon(weapon) {
@@ -60,12 +60,14 @@ class Player {
         //         ]
         //     )
         // )
+        // currentScene.index++
         this.level++
         this.baseStr += Math.round(random(1, this.level))
         this.baseInt += Math.round(random(1, this.level))
         this.baseAgi += Math.round(random(1, this.level))
 
         this.hp = this.hpMax
+        this.mp = this.mpMax
         // this.mainStat += (this.level - 1)
         this.updateStats()
     }
@@ -78,19 +80,18 @@ class Player {
         this.int = this.baseInt + this.weapon.int + this.armor.int
         this.agi = this.baseAgi + this.weapon.agi + this.armor.agi
 
-
-        this.baseAttack = this.str * 5
-        this.baseDefence = Math.ceil(this.agi * 0.1)
+        this.baseAttack = Math.round(this.str * 0.5)
+        this.baseDefence = Math.ceil(this.agi * 0.5)
 
         this.attack = this.baseAttack + this.weapon.attack + this.armor.attack
         this.defence = this.baseDefence + this.weapon.defence + this.armor.defence
 
-        let newHp = this.str * this.str * 2 + 1
+        let newHp = this.str * 5 + 1
         let hpDifference = newHp - this.hpMax
         this.hpMax = newHp
         this.hp += hpDifference
 
-        let newMp = this.int * this.int * 2
+        let newMp = this.int * 5 + 1
         let mpDifference = newMp - this.mpMax
         this.mpMax = newMp
         this.mp += mpDifference

@@ -40,6 +40,9 @@ function setup() {
 
 function initGame() {
   player = new Player();
+  player.weapon = new Weapon();
+  player.armor = new Armor();
+  player.updateStats();
   sceneManager = new SceneManager();
   currentScene = sceneManager.scenes[sceneManager.index];
 }
@@ -62,8 +65,8 @@ function mousePressed(e) {
 }
 "use strict";
 
-var BUTTON_WIDTH = 200;
-var BUTTON_HEIGHT = 50;
+var BUTTON_WIDTH = 250;
+var BUTTON_HEIGHT = 70;
 var WIDTH = 900;
 var HEIGHT = 506.25;
 var STATUS_BAR_HEIGHT = 50;
@@ -147,6 +150,510 @@ function () {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var BattleEvent =
+/*#__PURE__*/
+function () {
+  function BattleEvent(creep, selectionsTextArray) {
+    var _ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
+        _ref$row = _ref.row,
+        row = _ref$row === void 0 ? 2 : _ref$row,
+        _ref$col = _ref.col,
+        col = _ref$col === void 0 ? 2 : _ref$col,
+        _ref$paddingX = _ref.paddingX,
+        paddingX = _ref$paddingX === void 0 ? 20 : _ref$paddingX,
+        _ref$paddingY = _ref.paddingY,
+        paddingY = _ref$paddingY === void 0 ? 10 : _ref$paddingY,
+        _ref$dialoguePortion = _ref.dialoguePortion,
+        dialoguePortion = _ref$dialoguePortion === void 0 ? 0.1 : _ref$dialoguePortion,
+        _ref$creepPortion = _ref.creepPortion,
+        creepPortion = _ref$creepPortion === void 0 ? 0.5 : _ref$creepPortion,
+        _ref$buttonWidth = _ref.buttonWidth,
+        buttonWidth = _ref$buttonWidth === void 0 ? BUTTON_WIDTH : _ref$buttonWidth,
+        _ref$buttonHeight = _ref.buttonHeight,
+        buttonHeight = _ref$buttonHeight === void 0 ? BUTTON_HEIGHT : _ref$buttonHeight,
+        _ref$isIcon = _ref.isIcon,
+        isIcon = _ref$isIcon === void 0 ? false : _ref$isIcon,
+        _ref$results = _ref.results,
+        results = _ref$results === void 0 ? [] : _ref$results,
+        _ref$dialogueTextSize = _ref.dialogueTextSize,
+        dialogueTextSize = _ref$dialogueTextSize === void 0 ? 48 : _ref$dialogueTextSize;
+
+    _classCallCheck(this, BattleEvent);
+
+    this.dialoguesTextArray = [creep.name];
+    this.selectionsTextArray = selectionsTextArray;
+    this.height = height - STATUS_BAR_HEIGHT;
+    this.dialogues = [];
+    this.selections = [];
+    this.index = 0;
+    this.shouldEnd = false;
+    this.turn = 0;
+    this.creep = creep;
+    this.results = results;
+    this.dialoguePortion = dialoguePortion;
+    this.creepPortion = creepPortion;
+    this.buttonWidth = buttonWidth;
+    this.buttonHeight = buttonHeight;
+    this.paddingX = paddingX;
+    this.paddingY = paddingY;
+    this.width = width - this.paddingX * 2;
+    this.row = row;
+    this.col = col;
+    this.dialogueTextSize = dialogueTextSize;
+    this.isIcon = isIcon;
+    this.resolved = false;
+    this.createCreepPortion();
+    this.createDialogues();
+
+    if (this.isIcon) {
+      this.createIconSelections();
+    } else {
+      this.createSelections();
+    }
+  }
+
+  _createClass(BattleEvent, [{
+    key: "createCreepPortion",
+    value: function createCreepPortion() {
+      var creepBoxHeight = this.height * this.creepPortion;
+      this.creepBox = new ImageBox(width / 2, STATUS_BAR_HEIGHT + creepBoxHeight / 2, width, creepBoxHeight, this.creep.img);
+    }
+  }, {
+    key: "healthBar",
+    value: function healthBar() {
+      var creepBoxHeight = this.height * this.creepPortion;
+      var w = 128;
+      var barH = 10;
+      var barY = STATUS_BAR_HEIGHT + creepBoxHeight / 2 - 128 / 2 - 30;
+      var x = width / 2;
+      var healthPorporation = constrain(this.creep.hp / this.creep.hpMax, 0, 1);
+      var barW = healthPorporation * w;
+      var barX = x - w / 2 + barW / 2;
+      noFill();
+      stroke(0);
+      strokeWeight(1);
+      rect(x, barY, w, barH);
+      fill(0);
+      stroke(0);
+      strokeWeight(1);
+      rect(barX, barY, barW, barH);
+    }
+  }, {
+    key: "createDialogues",
+    value: function createDialogues() {
+      var _this = this;
+
+      var dialogueHeight = this.height * this.dialoguePortion;
+      var creepBoxHeight = this.height * this.creepPortion;
+      this.dialoguesTextArray.forEach(function (element) {
+        _this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, element, 20, false, _this.dialogueTextSize));
+      });
+    }
+  }, {
+    key: "createSelections",
+    value: function createSelections() {
+      var _this2 = this;
+
+      this.selectionsTextArray.forEach(function (element, index) {
+        var x = index % _this2.col;
+        var y = Math.floor(index / _this2.col);
+        var dialogueHeight = _this2.height * (_this2.dialoguePortion + _this2.creepPortion);
+        var containerHeight = _this2.height * (1 - _this2.dialoguePortion - _this2.creepPortion);
+        var rowHeight = containerHeight / _this2.row;
+        var shouldCenterX = index % _this2.col === 0 && _this2.selectionsTextArray.length - 1 - index === 0;
+        var shouldCenterY = Math.floor((_this2.selectionsTextArray.length - 1) / _this2.col) === 0;
+        var yCenter = containerHeight / 2 + STATUS_BAR_HEIGHT + dialogueHeight;
+        var buttonPadding = (width - _this2.buttonWidth * _this2.col - (_this2.col - 1) * _this2.paddingX) / 2;
+
+        _this2.selections.push(new SelectionBox(shouldCenterX ? width / 2 : buttonPadding + _this2.buttonWidth / 2 + x * (_this2.paddingX + _this2.buttonWidth), shouldCenterY ? yCenter : yCenter - rowHeight / 2 + y * rowHeight, _this2.buttonWidth, _this2.buttonHeight, element));
+      });
+    }
+  }, {
+    key: "createIconSelections",
+    value: function createIconSelections() {
+      var _this3 = this;
+
+      this.selectionsTextArray.forEach(function (element, index) {
+        var x = index % _this3.col;
+        var y = Math.floor(index / _this3.col);
+        var dialogueHeight = _this3.height * _this3.dialoguePortion;
+        var containerHeight = _this3.height * (1 - _this3.dialoguePortion);
+        var rowHeight = containerHeight / _this3.row;
+        var shouldCenterX = index % _this3.col === 0 && _this3.selectionsTextArray.length - 1 - index === 0;
+        var shouldCenterY = Math.floor((_this3.selectionsTextArray.length - 1) / _this3.col) === 0;
+        var yCenter = containerHeight / 2 + STATUS_BAR_HEIGHT + dialogueHeight;
+        var buttonPadding = (width - _this3.buttonWidth * _this3.col - (_this3.col - 1) * _this3.paddingX) / 2;
+
+        _this3.selections.push(new IconSelectionBox(shouldCenterX ? width / 2 : buttonPadding + _this3.buttonWidth / 2 + x * (_this3.paddingX + _this3.buttonWidth), shouldCenterY ? yCenter : yCenter - rowHeight / 2 + y * rowHeight, _this3.buttonWidth, _this3.buttonHeight, element));
+      });
+    }
+  }, {
+    key: "show",
+    value: function show() {
+      if (this.dialogues.length - 1 > this.index) {
+        this.dialogues[this.index].show();
+      } else {
+        if (this.dialogues.length > 0) {
+          // console.log(this.dialogues)
+          this.dialogues[this.dialogues.length - 1].show();
+        }
+
+        if (this.turn % 2 == 0 && !this.resolved) {
+          this.selections.forEach(function (selection) {
+            selection.show();
+          });
+        }
+      }
+
+      this.creepBox.show();
+      this.healthBar();
+    }
+  }, {
+    key: "attack",
+    value: function attack() {
+      var _this4 = this;
+
+      //this.creep.name + ' took ' + player.attack + ' damages!'
+      var dialogueHeight = this.height * this.dialoguePortion;
+      var creepBoxHeight = this.height * this.creepPortion; // currentScene.events[currentScene.index].creep.hp -= player.attack
+
+      this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, this.creep.name + ' took ' + constrain(player.attack - this.creep.defence, 0, Infinity) + ' damages!', 20, false, this.dialogueTextSize, function () {
+        currentScene.events[currentScene.index].creep.hp -= constrain(player.attack - currentScene.events[currentScene.index].creep.defence, 0, Infinity);
+        _this4.resolved = true;
+      })); // this.turn++
+    }
+  }, {
+    key: "ability",
+    value: function ability() {
+      var _this5 = this;
+
+      //this.creep.name + ' took ' + player.attack + ' damages!'
+      var dialogueHeight = this.height * this.dialoguePortion;
+      var creepBoxHeight = this.height * this.creepPortion; // currentScene.events[currentScene.index].creep.hp -= player.attack
+
+      this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, this.creep.name + ' took ' + constrain(player.weapon.abilityAttack - this.creep.defence, 0, currentScene.events[currentScene.index].creep.hp) + ' damages!', 20, false, this.dialogueTextSize, function () {
+        currentScene.events[currentScene.index].creep.hp -= constrain(player.weapon.abilityAttack - currentScene.events[currentScene.index].creep.defence, 0, currentScene.events[currentScene.index].creep.hp);
+        player.mp -= Math.round(player.weapon.mp * player.mpMax);
+        _this5.resolved = true;
+      }));
+    }
+  }, {
+    key: "creepAttack",
+    value: function creepAttack() {
+      var _this6 = this;
+
+      var dialogueHeight = this.height * this.dialoguePortion;
+      var creepBoxHeight = this.height * this.creepPortion;
+      this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, 'YOU took ' + constrain(this.creep.attack - player.defence, 0, Infinity) + ' damages!', 20, false, this.dialogueTextSize, function () {
+        player.hp -= constrain(_this6.creep.attack - player.defence, 0, Infinity);
+        _this6.resolved = true;
+      })); // this.turn++
+    }
+  }, {
+    key: "pressed",
+    value: function pressed() {
+      var _this7 = this;
+
+      if (this.shouldEnd) {
+        if (this.index < this.dialogues.length - 1) {
+          this.index++;
+          return;
+        }
+
+        return;
+      }
+
+      if (this.resolved) {
+        if (this.creep.hp <= 0) {
+          var dialogueHeight = this.height * this.dialoguePortion;
+          var creepBoxHeight = this.height * this.creepPortion;
+          var creep = currentScene.events[currentScene.index].creep;
+          this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, 'VICTORY!', 20, false, this.dialogueTextSize));
+          this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, 'Gain ' + Math.ceil(creep.exp) + ' experience!', 20, false, this.dialogueTextSize, function () {
+            player.exp += Math.ceil(creep.exp);
+          }));
+          this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, 'Gain ' + Math.ceil(creep.money) + ' gold!', 20, false, this.dialogueTextSize, function () {
+            player.money += Math.ceil(creep.money);
+          }));
+          this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, 'Gain ' + Math.ceil(creep.material) + ' material(s)!', 20, false, this.dialogueTextSize, function () {
+            player.material += Math.ceil(creep.material);
+          }));
+          this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, '', 20, false, this.dialogueTextSize, function () {
+            sceneManager.next();
+          }));
+          this.shouldEnd = true;
+
+          if (this.index < this.dialogues.length - 1) {
+            this.index++;
+          }
+
+          return;
+        }
+
+        if (player.hp <= 0) {
+          var _dialogueHeight = this.height * this.dialoguePortion;
+
+          var _creepBoxHeight = this.height * this.creepPortion;
+
+          this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, 'YOU DIED!', 20, false, this.dialogueTextSize));
+          this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, 'YOU START FROM HAVING NOTHING...', 20, false, this.dialogueTextSize));
+          this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, 'AND YOU ARE HERE...', 20, false, this.dialogueTextSize));
+          this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, 'LIKE PUSHING A GIANT ROCK UP THE HILL...', 20, false, this.dialogueTextSize));
+          this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, 'BUT YOU COULD NEVER GET TO THE TOP...', 20, false, this.dialogueTextSize));
+          this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, 'LIKE A GAME DEVELOPER...', 20, false, this.dialogueTextSize));
+          this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, 'A NEVER ENDING JOURNEY...', 20, false, this.dialogueTextSize));
+          this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, 'BUT AT THE END...', 20, false, this.dialogueTextSize));
+          this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, 'THERE\'S NOTHING LEFT...', 20, false, this.dialogueTextSize));
+          this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, '', 20, false, this.dialogueTextSize, function () {
+            sceneManager.gameOver();
+          }));
+          this.shouldEnd = true;
+
+          if (this.index < this.dialogues.length - 1) {
+            this.index++;
+          }
+
+          return;
+        }
+
+        this.resolved = false;
+        this.turn++;
+      } // console.log(this.turn % 2, this.resolved)
+
+
+      if (this.turn % 2 === 1) {
+        if (!this.resolved) {
+          this.creepAttack();
+        }
+      }
+
+      this.selections.forEach(function (selection, index) {
+        selection.pressed(function () {
+          if (_this7.turn % 2 === 0) {
+            if (!_this7.resolved) {
+              if (index === 0) {
+                _this7.attack();
+              } else {
+                if (player.mp < player.weapon.mp * player.mpMax) return;
+
+                _this7.ability();
+              }
+            }
+          }
+        });
+      });
+
+      if (this.index < this.dialogues.length - 1) {
+        this.index++;
+      }
+    }
+  }]);
+
+  return BattleEvent;
+}();
+"use strict";
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var DialogueEvent =
+/*#__PURE__*/
+function () {
+  function DialogueEvent(elements) {
+    _classCallCheck(this, DialogueEvent);
+
+    this.elements = elements;
+    this.height = height - STATUS_BAR_HEIGHT;
+    this.dialogues = [];
+    this.index = 0;
+    this.createDialogues();
+  }
+
+  _createClass(DialogueEvent, [{
+    key: "createDialogues",
+    value: function createDialogues() {
+      var _this = this;
+
+      this.elements.forEach(function (element) {
+        _this.dialogues.push(new DialogueBox(width / 2, _this.height / 2 + STATUS_BAR_HEIGHT, width, _this.height, element, 20, true, 48));
+      });
+    }
+  }, {
+    key: "show",
+    value: function show() {
+      if (this.dialogues.length - 1 >= this.index) {
+        this.dialogues[this.index].show();
+      } else {
+        currentScene.index++;
+
+        if (currentScene.events.length <= currentScene.index) {
+          sceneManager.next();
+        }
+      }
+    }
+  }, {
+    key: "pressed",
+    value: function pressed() {
+      // this.dialogues[this.index]
+      if (!this.dialogues[this.index].collide()) return;
+
+      if (this.dialogues[this.index].atTheEnd) {
+        this.index++;
+      } else {
+        this.dialogues[this.index].atTheEnd = true;
+      }
+    }
+  }]);
+
+  return DialogueEvent;
+}();
+"use strict";
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var SelectionEvent =
+/*#__PURE__*/
+function () {
+  function SelectionEvent(dialoguesTextArray, selectionsTextArray) {
+    var _ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
+        _ref$row = _ref.row,
+        row = _ref$row === void 0 ? 2 : _ref$row,
+        _ref$col = _ref.col,
+        col = _ref$col === void 0 ? 2 : _ref$col,
+        _ref$paddingX = _ref.paddingX,
+        paddingX = _ref$paddingX === void 0 ? 20 : _ref$paddingX,
+        _ref$paddingY = _ref.paddingY,
+        paddingY = _ref$paddingY === void 0 ? 10 : _ref$paddingY,
+        _ref$dialoguePortion = _ref.dialoguePortion,
+        dialoguePortion = _ref$dialoguePortion === void 0 ? 0.5 : _ref$dialoguePortion,
+        _ref$buttonWidth = _ref.buttonWidth,
+        buttonWidth = _ref$buttonWidth === void 0 ? BUTTON_WIDTH : _ref$buttonWidth,
+        _ref$buttonHeight = _ref.buttonHeight,
+        buttonHeight = _ref$buttonHeight === void 0 ? BUTTON_HEIGHT : _ref$buttonHeight,
+        _ref$isIcon = _ref.isIcon,
+        isIcon = _ref$isIcon === void 0 ? false : _ref$isIcon,
+        _ref$results = _ref.results,
+        results = _ref$results === void 0 ? [] : _ref$results,
+        _ref$dialogueTextSize = _ref.dialogueTextSize,
+        dialogueTextSize = _ref$dialogueTextSize === void 0 ? 48 : _ref$dialogueTextSize;
+
+    _classCallCheck(this, SelectionEvent);
+
+    this.dialoguesTextArray = dialoguesTextArray;
+    this.selectionsTextArray = selectionsTextArray;
+    this.height = height - STATUS_BAR_HEIGHT;
+    this.dialogues = [];
+    this.selections = [];
+    this.index = 0;
+    this.results = results;
+    this.dialoguePortion = dialoguePortion;
+    this.buttonWidth = buttonWidth;
+    this.buttonHeight = buttonHeight;
+    this.paddingX = paddingX;
+    this.paddingY = paddingY;
+    this.width = width - this.paddingX * 2;
+    this.row = row;
+    this.col = col;
+    this.dialogueTextSize = dialogueTextSize;
+    this.isIcon = isIcon;
+    this.createDialogues();
+
+    if (this.isIcon) {
+      this.createIconSelections();
+    } else {
+      this.createSelections();
+    }
+  }
+
+  _createClass(SelectionEvent, [{
+    key: "createDialogues",
+    value: function createDialogues() {
+      var _this = this;
+
+      var dialogueHeight = this.height * this.dialoguePortion;
+      this.dialoguesTextArray.forEach(function (element) {
+        _this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT, width, dialogueHeight, element, 20, false, _this.dialogueTextSize));
+      });
+    }
+  }, {
+    key: "createSelections",
+    value: function createSelections() {
+      var _this2 = this;
+
+      this.selectionsTextArray.forEach(function (element, index) {
+        var x = index % _this2.col;
+        var y = Math.floor(index / _this2.col);
+        var dialogueHeight = _this2.height * _this2.dialoguePortion;
+        var containerHeight = _this2.height * (1 - _this2.dialoguePortion);
+        var rowHeight = containerHeight / _this2.row;
+        var shouldCenterX = index % _this2.col === 0 && _this2.selectionsTextArray.length - 1 - index === 0;
+        var shouldCenterY = Math.floor((_this2.selectionsTextArray.length - 1) / _this2.col) === 0;
+        var yCenter = containerHeight / 2 + STATUS_BAR_HEIGHT + dialogueHeight;
+        var buttonPadding = (width - _this2.buttonWidth * _this2.col - (_this2.col - 1) * _this2.paddingX) / 2;
+
+        _this2.selections.push(new SelectionBox(shouldCenterX ? width / 2 : buttonPadding + _this2.buttonWidth / 2 + x * (_this2.paddingX + _this2.buttonWidth), shouldCenterY ? yCenter : yCenter - rowHeight / 2 + y * rowHeight, _this2.buttonWidth, _this2.buttonHeight, element));
+      });
+    }
+  }, {
+    key: "createIconSelections",
+    value: function createIconSelections() {
+      var _this3 = this;
+
+      this.selectionsTextArray.forEach(function (element, index) {
+        var x = index % _this3.col;
+        var y = Math.floor(index / _this3.col);
+        var dialogueHeight = _this3.height * _this3.dialoguePortion;
+        var containerHeight = _this3.height * (1 - _this3.dialoguePortion);
+        var rowHeight = containerHeight / _this3.row;
+        var shouldCenterX = index % _this3.col === 0 && _this3.selectionsTextArray.length - 1 - index === 0;
+        var shouldCenterY = Math.floor((_this3.selectionsTextArray.length - 1) / _this3.col) === 0;
+        var yCenter = containerHeight / 2 + STATUS_BAR_HEIGHT + dialogueHeight;
+        var buttonPadding = (width - _this3.buttonWidth * _this3.col - (_this3.col - 1) * _this3.paddingX) / 2;
+
+        _this3.selections.push(new IconSelectionBox(shouldCenterX ? width / 2 : buttonPadding + _this3.buttonWidth / 2 + x * (_this3.paddingX + _this3.buttonWidth), shouldCenterY ? yCenter : yCenter - rowHeight / 2 + y * rowHeight, _this3.buttonWidth, _this3.buttonHeight, element));
+      });
+    }
+  }, {
+    key: "show",
+    value: function show() {
+      if (this.dialogues.length - 1 > this.index) {
+        this.dialogues[this.index].show();
+      } else {
+        this.dialogues[this.dialogues.length - 1].show();
+        this.selections.forEach(function (selection) {
+          selection.show();
+        });
+      }
+    }
+  }, {
+    key: "pressed",
+    value: function pressed() {
+      var _this4 = this;
+
+      this.index++;
+      this.selections.forEach(function (selection, index) {
+        selection.pressed(_this4.results[index]);
+      });
+    }
+  }]);
+
+  return SelectionEvent;
+}();
+"use strict";
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 var Armor = function Armor(type, quality) {
   _classCallCheck(this, Armor);
 
@@ -200,9 +707,10 @@ function () {
     this.hp = this.hpMax;
     this.img = mageImage;
     this.name = 'MAGE';
-    this.exp = Math.ceil(player.levelExp * 0.5);
+    this.exp = Math.ceil(player.levelExp * 0.25);
     this.money = Math.ceil(player.level * 10 + 1);
     this.type = type;
+    this.material = player.level * 2 + 1;
     this.initStats();
   }
 
@@ -210,14 +718,15 @@ function () {
     key: "initStats",
     value: function initStats() {
       if (this.type === BOSS) {
-        this.attack = Math.round(player.level * 10 + 10 + player.defence * 0.5);
+        this.attack = Math.round(player.level * 10 + 10 + player.defence * 0.1);
         this.hpMax = Math.round(player.level * 50 + 20);
         this.defence = Math.round(player.attack * 0.2);
         this.name = 'GAINT SWORD GUY';
-        this.exp = Math.ceil(player.levelExp);
+        this.exp = Math.ceil(player.levelExp * 0.5);
         this.img = giantSwordGuyImage;
         this.hp = this.hpMax;
         this.money = Math.ceil(player.level * 50 + 1);
+        this.material = player.level * 5 + 1;
       }
     }
   }]);
@@ -252,16 +761,15 @@ function () {
     this.mainStat = random(this.stats);
     this.exp = 0;
     this.levelExp = 1;
-    this.hpMax = this.str * this.str * 2 + 1;
+    this.hpMax = this.str * 2 + 1;
     this.hp = this.hpMax;
-    this.mpMax = this["int"] * this["int"] * 2;
+    this.mpMax = this["int"] * 2 + 1;
     this.mp = this.mpMax;
     this.baseAttack = this.str * 2;
     this.attack = this.baseAttack;
     this.defence = 0;
-    this.weapon = new Weapon();
-    this.armor = new Armor();
-    this.updateStats();
+    this.weapon = false;
+    this.armor = false; // this.updateStats()
   }
 
   _createClass(Player, [{
@@ -296,11 +804,13 @@ function () {
       //         ]
       //     )
       // )
+      // currentScene.index++
       this.level++;
       this.baseStr += Math.round(random(1, this.level));
       this.baseInt += Math.round(random(1, this.level));
       this.baseAgi += Math.round(random(1, this.level));
-      this.hp = this.hpMax; // this.mainStat += (this.level - 1)
+      this.hp = this.hpMax;
+      this.mp = this.mpMax; // this.mainStat += (this.level - 1)
 
       this.updateStats();
     }
@@ -310,15 +820,15 @@ function () {
       this.str = this.baseStr + this.weapon.str + this.armor.str;
       this["int"] = this.baseInt + this.weapon["int"] + this.armor["int"];
       this.agi = this.baseAgi + this.weapon.agi + this.armor.agi;
-      this.baseAttack = this.str * 5;
-      this.baseDefence = Math.ceil(this.agi * 0.1);
+      this.baseAttack = Math.round(this.str * 0.5);
+      this.baseDefence = Math.ceil(this.agi * 0.5);
       this.attack = this.baseAttack + this.weapon.attack + this.armor.attack;
       this.defence = this.baseDefence + this.weapon.defence + this.armor.defence;
-      var newHp = this.str * this.str * 2 + 1;
+      var newHp = this.str * 5 + 1;
       var hpDifference = newHp - this.hpMax;
       this.hpMax = newHp;
       this.hp += hpDifference;
-      var newMp = this["int"] * this["int"] * 2;
+      var newMp = this["int"] * 5 + 1;
       var mpDifference = newMp - this.mpMax;
       this.mpMax = newMp;
       this.mp += mpDifference;
@@ -338,6 +848,9 @@ var Weapon = function Weapon(type, quality) {
   this.type = type;
   this.quality = quality;
   this.name = 'Bare hand';
+  this.mp = 1;
+  this.ability = 'ONE PUNCH!';
+  this.abilityAttack = 999999;
   this.attack = 1;
   this.defence = 0;
   this.str = 0;
@@ -352,10 +865,16 @@ var Weapon = function Weapon(type, quality) {
         this.str = Math.round(player.baseStr * 0.2) + 1;
         this.img = swordImage;
         this.name = 'Great Sword';
+        this.ability = 'Heavy Slash';
+        this.mp = 0.3;
+        this.abilityAttack = 100 + player.level * 10;
       } else {
         this.attack = 20 + player.level * 2;
         this.img = swordImage;
         this.name = 'Sword';
+        this.ability = 'Slash';
+        this.mp = 0.3;
+        this.abilityAttack = 40 + player.level * 4;
       }
 
       break;
@@ -413,6 +932,96 @@ function () {
           _this.next();
         }]
       }]);
+    }, function () {
+      var mat = Math.ceil(player.material * 0.5) === 0 ? 1 : Math.ceil(player.material * 0.5);
+      return _construct(SelectionEvent, [['You found a villige...', 'You can exchange some of your materials for an equipment...'], ['Trade ' + mat + ' Materials for a Weapon', 'Trade ' + mat + ' Materials for an Armor', 'Walk away...'], {
+        paddingX: 50,
+        results: [function () {
+          if (player.material < mat) return;
+          player.material -= mat;
+          var equipment;
+          equipment = new Weapon(SWORD, NORMAL);
+          currentScene.events.push(_this.equipSelection(equipment, WEAPON));
+          currentScene.index++;
+        }, function () {
+          if (player.material < mat) return;
+          player.material -= mat;
+          var equipment;
+          equipment = new Armor(PLATE, NORMAL);
+          currentScene.events.push(_this.equipSelection(equipment, ARMOR));
+          currentScene.index++;
+        }, function () {
+          _this.next();
+        }]
+      }]);
+    }, function () {
+      var money = Math.ceil(player.str * player.level + 30);
+      return _construct(SelectionEvent, [['RIP OFF STORE...'], ['Pay $' + money + ' for a Weapon', 'Pay $' + money + ' for a Armor', 'Walk away...'], {
+        paddingX: 50,
+        results: [function () {
+          if (player.money < money) return;
+          player.money -= money;
+          var equipment;
+          equipment = new Weapon(SWORD, RARE);
+          currentScene.events.push(_this.equipSelection(equipment, WEAPON));
+          currentScene.index++;
+        }, function () {
+          if (player.money < money) return;
+          player.money -= money;
+          var equipment;
+          equipment = new Armor(PLATE, RARE);
+          currentScene.events.push(_this.equipSelection(equipment, ARMOR));
+          currentScene.index++;
+        }, function () {
+          _this.next();
+        }]
+      }]);
+    }, function () {
+      return _construct(SelectionEvent, [['CASINO...'], ['Bet for $30!', 'Bet for $80!', 'Bet for $200!', 'Walk away...'], {
+        paddingX: 50,
+        results: [function () {
+          var betAmount = 30;
+          if (player.money < betAmount) return;
+          player.money -= betAmount;
+
+          if (random() > 0.5) {
+            currentScene.events.push(new DialogueEvent(['You won $' + betAmount * 2 + '!']));
+            player.money += betAmount * 2;
+          } else {
+            currentScene.events.push(new DialogueEvent(['You lost your bet...', 'Better luck next time']));
+          }
+
+          currentScene.index++;
+        }, function () {
+          var betAmount = 80;
+          if (player.money < betAmount) return;
+          player.money -= betAmount;
+
+          if (random() > 0.5) {
+            currentScene.events.push(new DialogueEvent(['You won $' + betAmount * 2 + '!']));
+            player.money += betAmount * 2;
+          } else {
+            currentScene.events.push(new DialogueEvent(['You lost your bet...', 'Better luck next time']));
+          }
+
+          currentScene.index++;
+        }, function () {
+          var betAmount = 200;
+          if (player.money < betAmount) return;
+          player.money -= betAmount;
+
+          if (random() > 0.5) {
+            currentScene.events.push(new DialogueEvent(['You won $' + betAmount * 2 + '!']));
+            player.money += betAmount * 2;
+          } else {
+            currentScene.events.push(new DialogueEvent(['You lost your bet...', 'Better luck next time']));
+          }
+
+          currentScene.index++;
+        }, function () {
+          _this.next();
+        }]
+      }]);
     }];
     this.opportunity = [function () {
       return _construct(SelectionEvent, [['Repeated Horizontal Jump competition...'], ['Have a look', 'Walk away'], {
@@ -424,6 +1033,38 @@ function () {
           player.updateStats();
         }, function () {
           _this.next();
+        }]
+      }]);
+    }, function () {
+      var reduceHp = player.hp > 10 ? 10 : player.hp - 1;
+      return _construct(SelectionEvent, [['You heard wispers of unknown words...'], ['AKLD LSNKLNSDLK DLSKNDLKSD KLSD NJHD SHKDJ KJHSDK'], {
+        paddingX: 50,
+        results: [function () {
+          currentScene.events.push(new DialogueEvent(['HP - ' + reduceHp, 'INT + 5']));
+          currentScene.index++;
+          player.baseInt += 5;
+          player.updateStats();
+          player.hp -= reduceHp;
+        }]
+      }]);
+    }, function () {
+      var reduceHp = player.hp > 10 ? 10 : player.hp - 1;
+      return _construct(SelectionEvent, [['Excalibur...'], ['Try to pull it out...'], {
+        paddingX: 50,
+        results: [function () {
+          if (random() < 0.3) {
+            currentScene.events.push(new DialogueEvent(['Successful!']));
+            var equipment;
+            equipment = new Weapon(SWORD, RARE);
+            currentScene.events.push(_this.equipSelection(equipment, WEAPON));
+            currentScene.index++;
+          } else {
+            var gainStr = player.level * 2 + 1;
+            currentScene.events.push(new DialogueEvent(['Fail!', 'But you fell you become stronger...', 'STR + ' + gainStr]));
+            player.baseStr += gainStr;
+            player.updateStats();
+            currentScene.index++;
+          }
         }]
       }]);
     }];
@@ -474,7 +1115,7 @@ function () {
   _createClass(SceneManager, [{
     key: "createBattle",
     value: function createBattle(type) {
-      return _construct(BattleEvent, [new Creep(type), ['Attack', 'Ability'], {
+      return _construct(BattleEvent, [new Creep(type), ['Attack', player.weapon.ability + ' (MP: ' + Math.ceil(player.weapon.mp * player.mpMax) + ')'], {
         paddingX: 50
       }]);
     }
@@ -491,6 +1132,22 @@ function () {
 
       var startButton = new SelectionBox(width / 2, height / 2, BUTTON_WIDTH, BUTTON_HEIGHT, 'NOTHING', 'START');
       elements.push(startButton);
+      elements.push({
+        show: function show() {
+          textLeading(0);
+          textAlign(CENTER, CENTER);
+          textFont(font);
+          textSize(48);
+          fill(0);
+          stroke(0);
+          strokeWeight(1);
+          text('JOURNEY TO NOWHERE', width / 2, height / 2 - 100);
+        },
+        collide: function collide() {
+          return false;
+        },
+        pressed: function pressed() {}
+      });
       this.scenes.push(new Scene(this.scenes.length, elements));
     }
   }, {
@@ -891,9 +1548,8 @@ function (_Box) {
 
       switch (this.type) {
         case EVENT:
-          currentScene.events.push(sceneManager.events[0]());
-          currentScene.index++; // sceneManager.next()
-
+          currentScene.events.push(random(sceneManager.events)());
+          currentScene.index++;
           break;
 
         case BATTLE:
@@ -907,15 +1563,14 @@ function (_Box) {
           break;
 
         case OPPORTUNITY:
-          currentScene.events.push(sceneManager.opportunity[0]());
+          // currentScene.events.push(sceneManager.opportunity[2]())
+          currentScene.events.push(random(sceneManager.opportunity)());
           currentScene.index++;
           break;
 
         default:
           break;
-      } // console.log(this.type)
-      // sceneManager.next()
-
+      }
     }
   }]);
 
@@ -1315,475 +1970,3 @@ function (_Box) {
 
   return StatusBar;
 }(Box);
-"use strict";
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-var BattleEvent =
-/*#__PURE__*/
-function () {
-  function BattleEvent(creep, selectionsTextArray) {
-    var _ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
-        _ref$row = _ref.row,
-        row = _ref$row === void 0 ? 2 : _ref$row,
-        _ref$col = _ref.col,
-        col = _ref$col === void 0 ? 2 : _ref$col,
-        _ref$paddingX = _ref.paddingX,
-        paddingX = _ref$paddingX === void 0 ? 20 : _ref$paddingX,
-        _ref$paddingY = _ref.paddingY,
-        paddingY = _ref$paddingY === void 0 ? 10 : _ref$paddingY,
-        _ref$dialoguePortion = _ref.dialoguePortion,
-        dialoguePortion = _ref$dialoguePortion === void 0 ? 0.1 : _ref$dialoguePortion,
-        _ref$creepPortion = _ref.creepPortion,
-        creepPortion = _ref$creepPortion === void 0 ? 0.5 : _ref$creepPortion,
-        _ref$buttonWidth = _ref.buttonWidth,
-        buttonWidth = _ref$buttonWidth === void 0 ? BUTTON_WIDTH : _ref$buttonWidth,
-        _ref$buttonHeight = _ref.buttonHeight,
-        buttonHeight = _ref$buttonHeight === void 0 ? BUTTON_HEIGHT : _ref$buttonHeight,
-        _ref$isIcon = _ref.isIcon,
-        isIcon = _ref$isIcon === void 0 ? false : _ref$isIcon,
-        _ref$results = _ref.results,
-        results = _ref$results === void 0 ? [] : _ref$results,
-        _ref$dialogueTextSize = _ref.dialogueTextSize,
-        dialogueTextSize = _ref$dialogueTextSize === void 0 ? 48 : _ref$dialogueTextSize;
-
-    _classCallCheck(this, BattleEvent);
-
-    this.dialoguesTextArray = [creep.name];
-    this.selectionsTextArray = selectionsTextArray;
-    this.height = height - STATUS_BAR_HEIGHT;
-    this.dialogues = [];
-    this.selections = [];
-    this.index = 0;
-    this.shouldEnd = false;
-    this.turn = 0;
-    this.creep = creep;
-    this.results = results;
-    this.dialoguePortion = dialoguePortion;
-    this.creepPortion = creepPortion;
-    this.buttonWidth = buttonWidth;
-    this.buttonHeight = buttonHeight;
-    this.paddingX = paddingX;
-    this.paddingY = paddingY;
-    this.width = width - this.paddingX * 2;
-    this.row = row;
-    this.col = col;
-    this.dialogueTextSize = dialogueTextSize;
-    this.isIcon = isIcon;
-    this.resolved = false;
-    this.createCreepPortion();
-    this.createDialogues();
-
-    if (this.isIcon) {
-      this.createIconSelections();
-    } else {
-      this.createSelections();
-    }
-  }
-
-  _createClass(BattleEvent, [{
-    key: "createCreepPortion",
-    value: function createCreepPortion() {
-      var creepBoxHeight = this.height * this.creepPortion;
-      this.creepBox = new ImageBox(width / 2, STATUS_BAR_HEIGHT + creepBoxHeight / 2, width, creepBoxHeight, this.creep.img);
-    }
-  }, {
-    key: "healthBar",
-    value: function healthBar() {
-      var creepBoxHeight = this.height * this.creepPortion;
-      var w = 128;
-      var barH = 10;
-      var barY = STATUS_BAR_HEIGHT + creepBoxHeight / 2 - 128 / 2 - 30;
-      var x = width / 2;
-      var healthPorporation = constrain(this.creep.hp / this.creep.hpMax, 0, 1);
-      var barW = healthPorporation * w;
-      var barX = x - w / 2 + barW / 2;
-      noFill();
-      stroke(0);
-      strokeWeight(1);
-      rect(x, barY, w, barH);
-      fill(0);
-      stroke(0);
-      strokeWeight(1);
-      rect(barX, barY, barW, barH);
-    }
-  }, {
-    key: "createDialogues",
-    value: function createDialogues() {
-      var _this = this;
-
-      var dialogueHeight = this.height * this.dialoguePortion;
-      var creepBoxHeight = this.height * this.creepPortion;
-      this.dialoguesTextArray.forEach(function (element) {
-        _this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, element, 20, false, _this.dialogueTextSize));
-      });
-    }
-  }, {
-    key: "createSelections",
-    value: function createSelections() {
-      var _this2 = this;
-
-      this.selectionsTextArray.forEach(function (element, index) {
-        var x = index % _this2.col;
-        var y = Math.floor(index / _this2.col);
-        var dialogueHeight = _this2.height * (_this2.dialoguePortion + _this2.creepPortion);
-        var containerHeight = _this2.height * (1 - _this2.dialoguePortion - _this2.creepPortion);
-        var rowHeight = containerHeight / _this2.row;
-        var shouldCenterX = index % _this2.col === 0 && _this2.selectionsTextArray.length - 1 - index === 0;
-        var shouldCenterY = Math.floor((_this2.selectionsTextArray.length - 1) / _this2.col) === 0;
-        var yCenter = containerHeight / 2 + STATUS_BAR_HEIGHT + dialogueHeight;
-        var buttonPadding = (width - _this2.buttonWidth * _this2.col - (_this2.col - 1) * _this2.paddingX) / 2;
-
-        _this2.selections.push(new SelectionBox(shouldCenterX ? width / 2 : buttonPadding + _this2.buttonWidth / 2 + x * (_this2.paddingX + _this2.buttonWidth), shouldCenterY ? yCenter : yCenter - rowHeight / 2 + y * rowHeight, _this2.buttonWidth, _this2.buttonHeight, element));
-      });
-    }
-  }, {
-    key: "createIconSelections",
-    value: function createIconSelections() {
-      var _this3 = this;
-
-      this.selectionsTextArray.forEach(function (element, index) {
-        var x = index % _this3.col;
-        var y = Math.floor(index / _this3.col);
-        var dialogueHeight = _this3.height * _this3.dialoguePortion;
-        var containerHeight = _this3.height * (1 - _this3.dialoguePortion);
-        var rowHeight = containerHeight / _this3.row;
-        var shouldCenterX = index % _this3.col === 0 && _this3.selectionsTextArray.length - 1 - index === 0;
-        var shouldCenterY = Math.floor((_this3.selectionsTextArray.length - 1) / _this3.col) === 0;
-        var yCenter = containerHeight / 2 + STATUS_BAR_HEIGHT + dialogueHeight;
-        var buttonPadding = (width - _this3.buttonWidth * _this3.col - (_this3.col - 1) * _this3.paddingX) / 2;
-
-        _this3.selections.push(new IconSelectionBox(shouldCenterX ? width / 2 : buttonPadding + _this3.buttonWidth / 2 + x * (_this3.paddingX + _this3.buttonWidth), shouldCenterY ? yCenter : yCenter - rowHeight / 2 + y * rowHeight, _this3.buttonWidth, _this3.buttonHeight, element));
-      });
-    }
-  }, {
-    key: "show",
-    value: function show() {
-      if (this.dialogues.length - 1 > this.index) {
-        this.dialogues[this.index].show();
-      } else {
-        if (this.dialogues.length > 0) {
-          // console.log(this.dialogues)
-          this.dialogues[this.dialogues.length - 1].show();
-        }
-
-        if (this.turn % 2 == 0 && !this.resolved) {
-          this.selections.forEach(function (selection) {
-            selection.show();
-          });
-        }
-      }
-
-      this.creepBox.show();
-      this.healthBar();
-    }
-  }, {
-    key: "attack",
-    value: function attack() {
-      var _this4 = this;
-
-      //this.creep.name + ' took ' + player.attack + ' damages!'
-      var dialogueHeight = this.height * this.dialoguePortion;
-      var creepBoxHeight = this.height * this.creepPortion; // currentScene.events[currentScene.index].creep.hp -= player.attack
-
-      this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, this.creep.name + ' took ' + constrain(player.attack - this.creep.defence, 0, Infinity) + ' damages!', 20, false, this.dialogueTextSize, function () {
-        currentScene.events[currentScene.index].creep.hp -= constrain(player.attack - currentScene.events[currentScene.index].creep.defence, 0, Infinity);
-        _this4.resolved = true;
-      })); // this.turn++
-    }
-  }, {
-    key: "creepAttack",
-    value: function creepAttack() {
-      var _this5 = this;
-
-      var dialogueHeight = this.height * this.dialoguePortion;
-      var creepBoxHeight = this.height * this.creepPortion;
-      this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, 'YOU took ' + constrain(this.creep.attack - player.defence, 0, Infinity) + ' damages!', 20, false, this.dialogueTextSize, function () {
-        player.hp -= constrain(_this5.creep.attack - player.defence, 0, Infinity);
-        _this5.resolved = true;
-      })); // this.turn++
-    }
-  }, {
-    key: "pressed",
-    value: function pressed() {
-      var _this6 = this;
-
-      if (this.shouldEnd) {
-        if (this.index < this.dialogues.length - 1) {
-          this.index++;
-          return;
-        }
-
-        return;
-      }
-
-      if (this.resolved) {
-        if (this.creep.hp <= 0) {
-          var dialogueHeight = this.height * this.dialoguePortion;
-          var creepBoxHeight = this.height * this.creepPortion;
-          var creep = currentScene.events[currentScene.index].creep;
-          this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, 'VICTORY!', 20, false, this.dialogueTextSize));
-          this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, 'Gain ' + Math.ceil(creep.exp) + ' experience!', 20, false, this.dialogueTextSize, function () {
-            player.exp += Math.ceil(creep.exp);
-          }));
-          this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, 'Gain ' + Math.ceil(creep.money) + ' gold!', 20, false, this.dialogueTextSize, function () {
-            player.money += Math.ceil(creep.money);
-          }));
-          this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, '', 20, false, this.dialogueTextSize, function () {
-            sceneManager.next();
-          }));
-          this.shouldEnd = true;
-
-          if (this.index < this.dialogues.length - 1) {
-            this.index++;
-          }
-
-          return;
-        }
-
-        if (player.hp <= 0) {
-          var _dialogueHeight = this.height * this.dialoguePortion;
-
-          var _creepBoxHeight = this.height * this.creepPortion;
-
-          this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, 'YOU DIED!', 20, false, this.dialogueTextSize));
-          this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, '', 20, false, this.dialogueTextSize, function () {
-            sceneManager.gameOver();
-          }));
-          this.shouldEnd = true;
-
-          if (this.index < this.dialogues.length - 1) {
-            this.index++;
-          }
-
-          return;
-        }
-
-        this.resolved = false;
-        this.turn++;
-      } // console.log(this.turn % 2, this.resolved)
-
-
-      if (this.turn % 2 === 1) {
-        if (!this.resolved) {
-          this.creepAttack();
-        }
-      }
-
-      this.selections.forEach(function (selection) {
-        selection.pressed(function () {
-          if (_this6.turn % 2 === 0) {
-            if (!_this6.resolved) {
-              _this6.attack();
-            }
-          }
-        });
-      });
-
-      if (this.index < this.dialogues.length - 1) {
-        this.index++;
-      }
-    }
-  }]);
-
-  return BattleEvent;
-}();
-"use strict";
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-var DialogueEvent =
-/*#__PURE__*/
-function () {
-  function DialogueEvent(elements) {
-    _classCallCheck(this, DialogueEvent);
-
-    this.elements = elements;
-    this.height = height - STATUS_BAR_HEIGHT;
-    this.dialogues = [];
-    this.index = 0;
-    this.createDialogues();
-  }
-
-  _createClass(DialogueEvent, [{
-    key: "createDialogues",
-    value: function createDialogues() {
-      var _this = this;
-
-      this.elements.forEach(function (element) {
-        _this.dialogues.push(new DialogueBox(width / 2, _this.height / 2 + STATUS_BAR_HEIGHT, width, _this.height, element, 20, true, 48));
-      });
-    }
-  }, {
-    key: "show",
-    value: function show() {
-      if (this.dialogues.length - 1 >= this.index) {
-        this.dialogues[this.index].show();
-      } else {
-        currentScene.index++;
-
-        if (currentScene.events.length <= currentScene.index) {
-          sceneManager.next();
-        }
-      }
-    }
-  }, {
-    key: "pressed",
-    value: function pressed() {
-      // this.dialogues[this.index]
-      if (!this.dialogues[this.index].collide()) return;
-
-      if (this.dialogues[this.index].atTheEnd) {
-        this.index++;
-      } else {
-        this.dialogues[this.index].atTheEnd = true;
-      }
-    }
-  }]);
-
-  return DialogueEvent;
-}();
-"use strict";
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-var SelectionEvent =
-/*#__PURE__*/
-function () {
-  function SelectionEvent(dialoguesTextArray, selectionsTextArray) {
-    var _ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
-        _ref$row = _ref.row,
-        row = _ref$row === void 0 ? 2 : _ref$row,
-        _ref$col = _ref.col,
-        col = _ref$col === void 0 ? 2 : _ref$col,
-        _ref$paddingX = _ref.paddingX,
-        paddingX = _ref$paddingX === void 0 ? 20 : _ref$paddingX,
-        _ref$paddingY = _ref.paddingY,
-        paddingY = _ref$paddingY === void 0 ? 10 : _ref$paddingY,
-        _ref$dialoguePortion = _ref.dialoguePortion,
-        dialoguePortion = _ref$dialoguePortion === void 0 ? 0.5 : _ref$dialoguePortion,
-        _ref$buttonWidth = _ref.buttonWidth,
-        buttonWidth = _ref$buttonWidth === void 0 ? BUTTON_WIDTH : _ref$buttonWidth,
-        _ref$buttonHeight = _ref.buttonHeight,
-        buttonHeight = _ref$buttonHeight === void 0 ? BUTTON_HEIGHT : _ref$buttonHeight,
-        _ref$isIcon = _ref.isIcon,
-        isIcon = _ref$isIcon === void 0 ? false : _ref$isIcon,
-        _ref$results = _ref.results,
-        results = _ref$results === void 0 ? [] : _ref$results,
-        _ref$dialogueTextSize = _ref.dialogueTextSize,
-        dialogueTextSize = _ref$dialogueTextSize === void 0 ? 48 : _ref$dialogueTextSize;
-
-    _classCallCheck(this, SelectionEvent);
-
-    this.dialoguesTextArray = dialoguesTextArray;
-    this.selectionsTextArray = selectionsTextArray;
-    this.height = height - STATUS_BAR_HEIGHT;
-    this.dialogues = [];
-    this.selections = [];
-    this.index = 0;
-    this.results = results;
-    this.dialoguePortion = dialoguePortion;
-    this.buttonWidth = buttonWidth;
-    this.buttonHeight = buttonHeight;
-    this.paddingX = paddingX;
-    this.paddingY = paddingY;
-    this.width = width - this.paddingX * 2;
-    this.row = row;
-    this.col = col;
-    this.dialogueTextSize = dialogueTextSize;
-    this.isIcon = isIcon;
-    this.createDialogues();
-
-    if (this.isIcon) {
-      this.createIconSelections();
-    } else {
-      this.createSelections();
-    }
-  }
-
-  _createClass(SelectionEvent, [{
-    key: "createDialogues",
-    value: function createDialogues() {
-      var _this = this;
-
-      var dialogueHeight = this.height * this.dialoguePortion;
-      this.dialoguesTextArray.forEach(function (element) {
-        _this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT, width, dialogueHeight, element, 20, false, _this.dialogueTextSize));
-      });
-    }
-  }, {
-    key: "createSelections",
-    value: function createSelections() {
-      var _this2 = this;
-
-      this.selectionsTextArray.forEach(function (element, index) {
-        var x = index % _this2.col;
-        var y = Math.floor(index / _this2.col);
-        var dialogueHeight = _this2.height * _this2.dialoguePortion;
-        var containerHeight = _this2.height * (1 - _this2.dialoguePortion);
-        var rowHeight = containerHeight / _this2.row;
-        var shouldCenterX = index % _this2.col === 0 && _this2.selectionsTextArray.length - 1 - index === 0;
-        var shouldCenterY = Math.floor((_this2.selectionsTextArray.length - 1) / _this2.col) === 0;
-        var yCenter = containerHeight / 2 + STATUS_BAR_HEIGHT + dialogueHeight;
-        var buttonPadding = (width - _this2.buttonWidth * _this2.col - (_this2.col - 1) * _this2.paddingX) / 2;
-
-        _this2.selections.push(new SelectionBox(shouldCenterX ? width / 2 : buttonPadding + _this2.buttonWidth / 2 + x * (_this2.paddingX + _this2.buttonWidth), shouldCenterY ? yCenter : yCenter - rowHeight / 2 + y * rowHeight, _this2.buttonWidth, _this2.buttonHeight, element));
-      });
-    }
-  }, {
-    key: "createIconSelections",
-    value: function createIconSelections() {
-      var _this3 = this;
-
-      this.selectionsTextArray.forEach(function (element, index) {
-        var x = index % _this3.col;
-        var y = Math.floor(index / _this3.col);
-        var dialogueHeight = _this3.height * _this3.dialoguePortion;
-        var containerHeight = _this3.height * (1 - _this3.dialoguePortion);
-        var rowHeight = containerHeight / _this3.row;
-        var shouldCenterX = index % _this3.col === 0 && _this3.selectionsTextArray.length - 1 - index === 0;
-        var shouldCenterY = Math.floor((_this3.selectionsTextArray.length - 1) / _this3.col) === 0;
-        var yCenter = containerHeight / 2 + STATUS_BAR_HEIGHT + dialogueHeight;
-        var buttonPadding = (width - _this3.buttonWidth * _this3.col - (_this3.col - 1) * _this3.paddingX) / 2;
-
-        _this3.selections.push(new IconSelectionBox(shouldCenterX ? width / 2 : buttonPadding + _this3.buttonWidth / 2 + x * (_this3.paddingX + _this3.buttonWidth), shouldCenterY ? yCenter : yCenter - rowHeight / 2 + y * rowHeight, _this3.buttonWidth, _this3.buttonHeight, element));
-      });
-    }
-  }, {
-    key: "show",
-    value: function show() {
-      if (this.dialogues.length - 1 > this.index) {
-        this.dialogues[this.index].show();
-      } else {
-        this.dialogues[this.dialogues.length - 1].show();
-        this.selections.forEach(function (selection) {
-          selection.show();
-        });
-      }
-    }
-  }, {
-    key: "pressed",
-    value: function pressed() {
-      var _this4 = this;
-
-      this.index++;
-      this.selections.forEach(function (selection, index) {
-        selection.pressed(_this4.results[index]);
-      });
-    }
-  }]);
-
-  return SelectionEvent;
-}();

@@ -185,6 +185,25 @@ class BattleEvent {
         // this.turn++
     }
 
+    ability() {
+        //this.creep.name + ' took ' + player.attack + ' damages!'
+        let dialogueHeight = this.height * this.dialoguePortion
+        let creepBoxHeight = this.height * this.creepPortion
+        // currentScene.events[currentScene.index].creep.hp -= player.attack
+        this.dialogues.push(new DialogueBox(
+            width / 2,
+            dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight,
+            width, dialogueHeight,
+            this.creep.name + ' took ' + constrain(player.weapon.abilityAttack - this.creep.defence, 0, currentScene.events[currentScene.index].creep.hp) + ' damages!',
+            20, false, this.dialogueTextSize,
+            () => {
+                currentScene.events[currentScene.index].creep.hp -= constrain(player.weapon.abilityAttack - currentScene.events[currentScene.index].creep.defence, 0, currentScene.events[currentScene.index].creep.hp)
+                player.mp -= Math.round(player.weapon.mp * player.mpMax)
+                this.resolved = true
+            }
+        ))
+    }
+
     creepAttack() {
         let dialogueHeight = this.height * this.dialoguePortion
         let creepBoxHeight = this.height * this.creepPortion
@@ -250,6 +269,16 @@ class BattleEvent {
                     width / 2,
                     dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight,
                     width, dialogueHeight,
+                    'Gain ' + Math.ceil(creep.material) + ' material(s)!',
+                    20, false, this.dialogueTextSize,
+                    () => {
+                        player.material += Math.ceil(creep.material)
+                    }
+                ))
+                this.dialogues.push(new DialogueBox(
+                    width / 2,
+                    dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight,
+                    width, dialogueHeight,
                     '',
                     20, false, this.dialogueTextSize,
                     () => {
@@ -272,6 +301,62 @@ class BattleEvent {
                     dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight,
                     width, dialogueHeight,
                     'YOU DIED!',
+                    20, false, this.dialogueTextSize
+                ))
+                this.dialogues.push(new DialogueBox(
+                    width / 2,
+                    dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight,
+                    width, dialogueHeight,
+                    'YOU START FROM HAVING NOTHING...',
+                    20, false, this.dialogueTextSize
+                ))
+                this.dialogues.push(new DialogueBox(
+                    width / 2,
+                    dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight,
+                    width, dialogueHeight,
+                    'AND YOU ARE HERE...',
+                    20, false, this.dialogueTextSize
+                ))
+                this.dialogues.push(new DialogueBox(
+                    width / 2,
+                    dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight,
+                    width, dialogueHeight,
+                    'LIKE PUSHING A GIANT ROCK UP THE HILL...',
+                    20, false, this.dialogueTextSize
+                ))
+                this.dialogues.push(new DialogueBox(
+                    width / 2,
+                    dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight,
+                    width, dialogueHeight,
+                    'BUT YOU COULD NEVER GET TO THE TOP...',
+                    20, false, this.dialogueTextSize
+                ))
+                this.dialogues.push(new DialogueBox(
+                    width / 2,
+                    dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight,
+                    width, dialogueHeight,
+                    'LIKE A GAME DEVELOPER...',
+                    20, false, this.dialogueTextSize
+                ))
+                this.dialogues.push(new DialogueBox(
+                    width / 2,
+                    dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight,
+                    width, dialogueHeight,
+                    'A NEVER ENDING JOURNEY...',
+                    20, false, this.dialogueTextSize
+                ))
+                this.dialogues.push(new DialogueBox(
+                    width / 2,
+                    dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight,
+                    width, dialogueHeight,
+                    'BUT AT THE END...',
+                    20, false, this.dialogueTextSize
+                ))
+                this.dialogues.push(new DialogueBox(
+                    width / 2,
+                    dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight,
+                    width, dialogueHeight,
+                    'THERE\'S NOTHING LEFT...',
                     20, false, this.dialogueTextSize
                 ))
                 this.dialogues.push(new DialogueBox(
@@ -304,11 +389,16 @@ class BattleEvent {
             }
         }
 
-        this.selections.forEach((selection) => {
+        this.selections.forEach((selection, index) => {
             selection.pressed(() => {
                 if (this.turn % 2 === 0) {
                     if (!this.resolved) {
-                        this.attack()
+                        if (index === 0) {
+                            this.attack()
+                        } else {
+                            if (player.mp < player.weapon.mp * player.mpMax) return
+                            this.ability()
+                        }
                     }
                 }
             })

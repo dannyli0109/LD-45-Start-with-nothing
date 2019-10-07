@@ -43,9 +43,8 @@ class IconSelectionBox extends Box {
         if (!this.collide()) return
         switch (this.type) {
             case EVENT:
-                currentScene.events.push(sceneManager.events[0]())
+                currentScene.events.push(random(sceneManager.events)())
                 currentScene.index++
-                // sceneManager.next()
                 break;
             case BATTLE:
                 currentScene.events.push(sceneManager.createBattle(CREEP))
@@ -56,13 +55,12 @@ class IconSelectionBox extends Box {
                 currentScene.index++
                 break
             case OPPORTUNITY:
-                currentScene.events.push(sceneManager.opportunity[0]())
+                // currentScene.events.push(sceneManager.opportunity[2]())
+                currentScene.events.push(random(sceneManager.opportunity)())
                 currentScene.index++
                 break;
             default:
                 break;
         }
-        // console.log(this.type)
-        // sceneManager.next()
     }
 }

@@ -6,23 +6,25 @@ class Creep {
         this.hp = this.hpMax
         this.img = mageImage
         this.name = 'MAGE'
-        this.exp = Math.ceil(player.levelExp * 0.5)
+        this.exp = Math.ceil(player.levelExp * 0.25)
         this.money = Math.ceil(player.level * 10 + 1)
         this.type = type
+        this.material = player.level * 2 + 1
 
         this.initStats()
     }
 
     initStats() {
         if (this.type === BOSS) {
-            this.attack = Math.round(player.level * 10 + 10 + player.defence * 0.5)
+            this.attack = Math.round(player.level * 10 + 10 + player.defence * 0.1)
             this.hpMax = Math.round(player.level * 50 + 20)
             this.defence = Math.round(player.attack * 0.2)
             this.name = 'GAINT SWORD GUY'
-            this.exp = Math.ceil(player.levelExp)
+            this.exp = Math.ceil(player.levelExp * 0.5)
             this.img = giantSwordGuyImage
             this.hp = this.hpMax
             this.money = Math.ceil(player.level * 50 + 1)
+            this.material = player.level * 5 + 1
         }
     }
 }

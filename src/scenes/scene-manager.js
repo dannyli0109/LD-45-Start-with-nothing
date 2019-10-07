@@ -55,6 +55,202 @@ class SceneManager {
                         }
                     ]
                 )
+            },
+            () => {
+                let mat = (Math.ceil(player.material * 0.5) === 0 ? 1 : Math.ceil(player.material * 0.5))
+                return new SelectionEvent(
+                    ...[
+                        [
+                            'You found a villige...',
+                            'You can exchange some of your materials for an equipment...'
+                        ],
+                        [
+                            'Trade ' + mat + ' Materials for a Weapon',
+                            'Trade ' + mat + ' Materials for an Armor',
+                            'Walk away...'
+                        ],
+                        {
+                            paddingX: 50,
+                            results: [
+                                () => {
+                                    if (player.material < mat) return
+                                    player.material -= mat
+
+
+                                    let equipment
+
+                                    equipment = new Weapon(SWORD, NORMAL)
+                                    currentScene.events.push(this.equipSelection(equipment, WEAPON))
+
+                                    currentScene.index++
+                                },
+                                () => {
+                                    if (player.material < mat) return
+                                    player.material -= mat
+
+                                    let equipment
+
+                                    equipment = new Armor(PLATE, NORMAL)
+                                    currentScene.events.push(this.equipSelection(equipment, ARMOR))
+
+                                    currentScene.index++
+                                },
+                                () => {
+                                    this.next()
+                                }
+                            ]
+                        }
+                    ]
+                )
+            },
+            () => {
+                let money = Math.ceil(player.str * player.level + 30)
+                return new SelectionEvent(
+                    ...[
+                        [
+                            'RIP OFF STORE...'
+                        ],
+                        [
+                            'Pay $' + money + ' for a Weapon',
+                            'Pay $' + money + ' for a Armor',
+                            'Walk away...'
+                        ],
+                        {
+                            paddingX: 50,
+                            results: [
+                                () => {
+                                    if (player.money < money) return
+                                    player.money -= money
+
+                                    let equipment
+
+                                    equipment = new Weapon(SWORD, RARE)
+                                    currentScene.events.push(this.equipSelection(equipment, WEAPON))
+
+                                    currentScene.index++
+                                },
+                                () => {
+                                    if (player.money < money) return
+                                    player.money -= money
+
+                                    let equipment
+
+                                    equipment = new Armor(PLATE, RARE)
+                                    currentScene.events.push(this.equipSelection(equipment, ARMOR))
+
+                                    currentScene.index++
+                                },
+                                () => {
+                                    this.next()
+                                }
+                            ]
+                        }
+                    ]
+                )
+            },
+            () => {
+                return new SelectionEvent(
+                    ...[
+                        [
+                            'CASINO...'
+                        ],
+                        [
+                            'Bet for $30!',
+                            'Bet for $80!',
+                            'Bet for $200!',
+                            'Walk away...'
+                        ],
+                        {
+                            paddingX: 50,
+                            results: [
+                                () => {
+                                    let betAmount = 30
+                                    if (player.money < betAmount) return
+                                    player.money -= betAmount
+
+                                    if (random() > 0.5) {
+                                        currentScene.events.push(
+                                            new DialogueEvent(
+                                                [
+                                                    'You won $' + betAmount * 2 + '!'
+                                                ]
+                                            )
+                                        )
+                                        player.money += betAmount * 2
+                                    } else {
+                                        currentScene.events.push(
+                                            new DialogueEvent(
+                                                [
+                                                    'You lost your bet...',
+                                                    'Better luck next time'
+                                                ]
+                                            )
+                                        )
+                                    }
+
+                                    currentScene.index++
+                                },
+                                () => {
+                                    let betAmount = 80
+                                    if (player.money < betAmount) return
+                                    player.money -= betAmount
+
+                                    if (random() > 0.5) {
+                                        currentScene.events.push(
+                                            new DialogueEvent(
+                                                [
+                                                    'You won $' + betAmount * 2 + '!'
+                                                ]
+                                            )
+                                        )
+                                        player.money += betAmount * 2
+                                    } else {
+                                        currentScene.events.push(
+                                            new DialogueEvent(
+                                                [
+                                                    'You lost your bet...',
+                                                    'Better luck next time'
+                                                ]
+                                            )
+                                        )
+                                    }
+
+                                    currentScene.index++
+                                },
+                                () => {
+                                    let betAmount = 200
+                                    if (player.money < betAmount) return
+                                    player.money -= betAmount
+
+                                    if (random() > 0.5) {
+                                        currentScene.events.push(
+                                            new DialogueEvent(
+                                                [
+                                                    'You won $' + betAmount * 2 + '!'
+                                                ]
+                                            )
+                                        )
+                                        player.money += betAmount * 2
+                                    } else {
+                                        currentScene.events.push(
+                                            new DialogueEvent(
+                                                [
+                                                    'You lost your bet...',
+                                                    'Better luck next time'
+                                                ]
+                                            )
+                                        )
+                                    }
+
+                                    currentScene.index++
+                                },
+                                () => {
+                                    this.next()
+                                }
+                            ]
+                        }
+                    ]
+                )
             }
         ]
 
@@ -86,6 +282,86 @@ class SceneManager {
                                 },
                                 () => {
                                     this.next()
+                                }
+                            ]
+                        }
+                    ]
+                )
+            },
+            () => {
+                let reduceHp = player.hp > 10 ? 10 : (player.hp - 1)
+                return new SelectionEvent(
+                    ...[
+                        [
+                            'You heard wispers of unknown words...'
+                        ],
+                        [
+                            'AKLD LSNKLNSDLK DLSKNDLKSD KLSD NJHD SHKDJ KJHSDK'
+                        ],
+                        {
+                            paddingX: 50,
+                            results: [
+                                () => {
+                                    currentScene.events.push(
+                                        new DialogueEvent(
+                                            [
+                                                'HP - ' + reduceHp,
+                                                'INT + 5'
+                                            ]
+                                        )
+                                    )
+                                    currentScene.index++
+                                    player.baseInt += 5
+                                    player.updateStats()
+                                    player.hp -= reduceHp
+                                }
+                            ]
+                        }
+                    ]
+                )
+            },
+            () => {
+                let reduceHp = player.hp > 10 ? 10 : (player.hp - 1)
+                return new SelectionEvent(
+                    ...[
+                        [
+                            'Excalibur...'
+                        ],
+                        [
+                            'Try to pull it out...'
+                        ],
+                        {
+                            paddingX: 50,
+                            results: [
+                                () => {
+
+                                    if (random() < 0.3) {
+                                        currentScene.events.push(
+                                            new DialogueEvent(
+                                                [
+                                                    'Successful!'
+                                                ]
+                                            )
+                                        )
+                                        let equipment
+                                        equipment = new Weapon(SWORD, RARE)
+                                        currentScene.events.push(this.equipSelection(equipment, WEAPON))
+                                        currentScene.index++
+                                    } else {
+                                        let gainStr = player.level * 2 + 1
+                                        currentScene.events.push(
+                                            new DialogueEvent(
+                                                [
+                                                    'Fail!',
+                                                    'But you fell you become stronger...',
+                                                    'STR + ' + gainStr
+                                                ]
+                                            )
+                                        )
+                                        player.baseStr += gainStr
+                                        player.updateStats()
+                                        currentScene.index++
+                                    }
                                 }
                             ]
                         }
@@ -150,7 +426,7 @@ class SceneManager {
                 new Creep(type),
                 [
                     'Attack',
-                    'Ability'
+                    player.weapon.ability + ' (MP: ' + Math.ceil(player.weapon.mp * player.mpMax) + ')'
                 ],
                 {
                     paddingX: 50
@@ -170,7 +446,26 @@ class SceneManager {
         // let dialogueBox = new DialogueBox(width / 2, height / 4, width, height / 2, 'Before changing the example, it might be helpful to submit a feature request to whomever handles these kinds of issues at Mozilla/Webkit citing the noSmooth() documentation as an example of why this type of boolean control for graphics smoothing (not image smoothing) would be practical for developers.')
         let startButton = new SelectionBox(width / 2, height / 2, BUTTON_WIDTH, BUTTON_HEIGHT, 'NOTHING', 'START')
 
+
         elements.push(startButton)
+        elements.push({
+            show: () => {
+                textLeading(0)
+                textAlign(CENTER, CENTER)
+                textFont(font)
+                textSize(48)
+                fill(0)
+                stroke(0)
+                strokeWeight(1)
+                text('JOURNEY TO NOWHERE', width / 2, height / 2 - 100)
+            },
+            collide: () => {
+                return false
+            },
+            pressed: () => {
+
+            }
+        })
         this.scenes.push(new Scene(this.scenes.length, elements))
     }
 
