@@ -28,20 +28,18 @@ class Player {
         this.attack = this.baseAttack
         this.defence = 0
 
-        this.weapon = {
-            attack: 0,
-            agi: 0,
-            str: 0,
-            int: 0
-        }
-
-
-
+        this.weapon = new Weapon()
+        this.armor = new Armor()
+        this.updateStats()
     }
 
     equipWeapon(weapon) {
         this.weapon = weapon
+        this.updateStats()
 
+    }
+    equipArmor(armor) {
+        this.armor = armor
         this.updateStats()
 
     }
@@ -74,14 +72,16 @@ class Player {
 
     updateStats() {
 
-        this.str = this.baseStr + this.weapon.str
-        this.int = this.baseInt + this.weapon.int
-        this.agi = this.baseAgi + this.weapon.agi
+        this.str = this.baseStr + this.weapon.str + this.armor.str
+        this.int = this.baseInt + this.weapon.int + this.armor.int
+        this.agi = this.baseAgi + this.weapon.agi + this.armor.agi
 
 
         this.baseAttack = this.str * 5
+        this.baseDefence = Math.round(this.agi * this.agi * 0.1)
 
-        this.attack = this.baseAttack + this.weapon.attack
+        this.attack = this.baseAttack + this.weapon.attack + this.armor.attack
+        this.defence = this.baseDefence + this.weapon.defence + this.armor.defence
 
         let newHp = this.str * this.str * 2 + 1
         let hpDifference = newHp - this.hpMax

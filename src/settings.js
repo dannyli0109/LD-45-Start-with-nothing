@@ -3,6 +3,7 @@ const BUTTON_HEIGHT = 50
 const WIDTH = 900
 const HEIGHT = 506.25
 const STATUS_BAR_HEIGHT = 50
+const STATUS_TITLE_HEIGHT = 25
 const STATUS_WIDTH = 150
 const STATE_PICK_EVENT = 1
 
@@ -15,5 +16,11 @@ const SWORD = 0
 const STAFF = 1
 const DAGGER = 2
 
+const PLATE = 0
+const CLOTH = 1
+const LEATHER = 2
+
 const NORMAL = 0
 const RARE = 1
+
+

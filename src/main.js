@@ -9,7 +9,9 @@ let player
 // icons
 let iconBattle, iconEvent, iconOpportunity, iconBoss
 
-let swordImage
+let swordImage, handImage, bodyImage
+
+let plateArmorImage
 
 let icons = []
 
@@ -20,6 +22,9 @@ function preload() {
     iconOpportunity = loadImage('./assets/icon-opportunity.png')
     iconBoss = loadImage('./assets/icon-boss.png')
     swordImage = loadImage('./assets/sword.png')
+    handImage = loadImage('./assets/hand.png')
+    bodyImage = loadImage('./assets/body.png')
+    plateArmorImage = loadImage('./assets/plate-armor.png')
 
     icons.push(...[iconBattle, iconEvent, iconOpportunity, iconBoss])
 }

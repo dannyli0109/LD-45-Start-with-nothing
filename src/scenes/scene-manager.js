@@ -30,9 +30,13 @@ class SceneManager {
                                         )
                                     )
 
-                                    let weapon = new Weapon(SWORD, RARE)
-
-                                    player.equipWeapon(weapon)
+                                    if (Math.random() > 0.5) {
+                                        let weapon = new Weapon(SWORD, NORMAL)
+                                        player.equipWeapon(weapon)
+                                    } else {
+                                        let armor = new Armor(PLATE, NORMAL)
+                                        player.equipArmor(armor)
+                                    }
 
                                     currentScene.events.push()
                                     currentScene.index++

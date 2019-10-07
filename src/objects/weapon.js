@@ -3,22 +3,29 @@ class Weapon {
         this.type = type
         this.quality = quality
 
-        this.attack = 0
+        this.name = 'Bare hand'
+
+        this.attack = 1
+        this.defence = 0
         this.str = 0
         this.agi = 0
         this.int = 0
-        this.img = swordImage
+        this.img = handImage
         switch (this.type) {
             case SWORD:
                 if (quality === RARE) {
-                    this.attack = Math.round(random(3 * (player.baseStr + 1), 7 * (player.baseStr + 1))) * (player.level + 1) * Math.round(random(3, 7))
-                    this.str = Math.round(random(1, 3) * 0.1 * (player.baseStr + 1))
+                    this.attack = 50 + player.level * 5
+                    this.str = Math.round(player.baseStr * 0.2) + 1
+                    this.img = swordImage
+                    this.name = 'Great Sword'
                 } else {
-                    this.attack = Math.round(random(1 * (player.baseStr + 1), 3 * (player.baseStr + 1))) * (player.level + 1) * Math.round(random(1, 3))
+                    this.attack = 20 + player.level * 2
+                    this.img = swordImage
+                    this.name = 'Sword'
                 }
-                break;
+                break
             default:
-                break;
+                break
         }
     }
 

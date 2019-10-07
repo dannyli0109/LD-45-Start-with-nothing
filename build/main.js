@@ -7,7 +7,8 @@ var sceneManager;
 var player; // icons
 
 var iconBattle, iconEvent, iconOpportunity, iconBoss;
-var swordImage;
+var swordImage, handImage, bodyImage;
+var plateArmorImage;
 var icons = [];
 
 function preload() {
@@ -17,6 +18,9 @@ function preload() {
   iconOpportunity = loadImage('./assets/icon-opportunity.png');
   iconBoss = loadImage('./assets/icon-boss.png');
   swordImage = loadImage('./assets/sword.png');
+  handImage = loadImage('./assets/hand.png');
+  bodyImage = loadImage('./assets/body.png');
+  plateArmorImage = loadImage('./assets/plate-armor.png');
   icons.push.apply(icons, [iconBattle, iconEvent, iconOpportunity, iconBoss]);
 }
 
@@ -53,6 +57,7 @@ var BUTTON_HEIGHT = 50;
 var WIDTH = 900;
 var HEIGHT = 506.25;
 var STATUS_BAR_HEIGHT = 50;
+var STATUS_TITLE_HEIGHT = 25;
 var STATUS_WIDTH = 150;
 var STATE_PICK_EVENT = 1;
 var BATTLE = 0;
@@ -62,6 +67,9 @@ var BOSS = 3;
 var SWORD = 0;
 var STAFF = 1;
 var DAGGER = 2;
+var PLATE = 0;
+var CLOTH = 1;
+var LEATHER = 2;
 var NORMAL = 0;
 var RARE = 1;
 "use strict";
@@ -317,6 +325,41 @@ function () {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var Armor = function Armor(type, quality) {
+  _classCallCheck(this, Armor);
+
+  this.type = type;
+  this.quality = quality;
+  this.name = 'Naked';
+  this.attack = 0;
+  this.defence = 0;
+  this.str = 0;
+  this.agi = 0;
+  this["int"] = 0;
+  this.img = bodyImage;
+
+  switch (this.type) {
+    case PLATE:
+      if (quality === RARE) {
+        this.defence = Math.round(this.str * 0.8 + 20);
+        this.img = plateArmorImage;
+        this.name = 'Bikini Plate Armor';
+      } else {
+        this.defence = Math.round(this.str * 5 + 10);
+        this.img = plateArmorImage;
+        this.name = 'Plate Armor';
+      }
+
+      break;
+
+    default:
+      break;
+  }
+};
+"use strict";
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
@@ -348,18 +391,21 @@ function () {
     this.baseAttack = this.str * 2;
     this.attack = this.baseAttack;
     this.defence = 0;
-    this.weapon = {
-      attack: 0,
-      agi: 0,
-      str: 0,
-      "int": 0
-    };
+    this.weapon = new Weapon();
+    this.armor = new Armor();
+    this.updateStats();
   }
 
   _createClass(Player, [{
     key: "equipWeapon",
     value: function equipWeapon(weapon) {
       this.weapon = weapon;
+      this.updateStats();
+    }
+  }, {
+    key: "equipArmor",
+    value: function equipArmor(armor) {
+      this.armor = armor;
       this.updateStats();
     }
   }, {
@@ -392,11 +438,13 @@ function () {
   }, {
     key: "updateStats",
     value: function updateStats() {
-      this.str = this.baseStr + this.weapon.str;
-      this["int"] = this.baseInt + this.weapon["int"];
-      this.agi = this.baseAgi + this.weapon.agi;
+      this.str = this.baseStr + this.weapon.str + this.armor.str;
+      this["int"] = this.baseInt + this.weapon["int"] + this.armor["int"];
+      this.agi = this.baseAgi + this.weapon.agi + this.armor.agi;
       this.baseAttack = this.str * 5;
-      this.attack = this.baseAttack + this.weapon.attack;
+      this.baseDefence = Math.round(this.agi * this.agi * 0.1);
+      this.attack = this.baseAttack + this.weapon.attack + this.armor.attack;
+      this.defence = this.baseDefence + this.weapon.defence + this.armor.defence;
       var newHp = this.str * this.str * 2 + 1;
       var hpDifference = newHp - this.hpMax;
       this.hpMax = newHp;
@@ -420,19 +468,25 @@ var Weapon = function Weapon(type, quality) {
 
   this.type = type;
   this.quality = quality;
-  this.attack = 0;
+  this.name = 'Bare hand';
+  this.attack = 1;
+  this.defence = 0;
   this.str = 0;
   this.agi = 0;
   this["int"] = 0;
-  this.img = swordImage;
+  this.img = handImage;
 
   switch (this.type) {
     case SWORD:
       if (quality === RARE) {
-        this.attack = Math.round(random(3 * (player.baseStr + 1), 7 * (player.baseStr + 1))) * (player.level + 1) * Math.round(random(3, 7));
-        this.str = Math.round(random(1, 3) * 0.1 * (player.baseStr + 1));
+        this.attack = 50 + player.level * 5;
+        this.str = Math.round(player.baseStr * 0.2) + 1;
+        this.img = swordImage;
+        this.name = 'Great Sword';
       } else {
-        this.attack = Math.round(random(1 * (player.baseStr + 1), 3 * (player.baseStr + 1))) * (player.level + 1) * Math.round(random(1, 3));
+        this.attack = 20 + player.level * 2;
+        this.img = swordImage;
+        this.name = 'Sword';
       }
 
       break;
@@ -474,8 +528,15 @@ function () {
           if (player.money < (Math.ceil(player.money * 0.8) === 0 ? 1 : Math.ceil(player.money * 0.8))) return;
           player.money -= Math.ceil(player.money * 0.8);
           currentScene.events.push(new DialogueEvent(['HOMELESS: THANK YOU SO MUCH!!!']));
-          var weapon = new Weapon(SWORD, RARE);
-          player.equipWeapon(weapon);
+
+          if (Math.random() > 0.5) {
+            var weapon = new Weapon(SWORD, NORMAL);
+            player.equipWeapon(weapon);
+          } else {
+            var armor = new Armor(PLATE, NORMAL);
+            player.equipArmor(armor);
+          }
+
           currentScene.events.push();
           currentScene.index++;
         }, function () {
@@ -1027,6 +1088,11 @@ function (_Box) {
         index: 0
       };
     });
+    _this.equipments = [''].map(function (item) {
+      return {
+        index: 0
+      };
+    });
     _this.frame = 0;
     return _this;
   }
@@ -1040,11 +1106,11 @@ function (_Box) {
       this.items[3].item = 'MP: ' + player.mp + ' / ' + player.mpMax;
       this.items[4].item = '$: ' + player.money;
       this.items[5].item = 'Material: ' + player.material;
-      this.stats[0].item = 'STR: ' + player.baseStr + ' + ' + player.weapon.str;
-      this.stats[1].item = 'INT: ' + player["int"];
-      this.stats[2].item = 'AGI: ' + player.agi;
-      this.stats[3].item = 'ATTACK: ' + player.baseAttack + ' + ' + player.weapon.attack;
-      this.stats[4].item = 'DEFENCE: ' + player.defence;
+      this.stats[0].item = 'STR: ' + player.baseStr + '(+' + (player.weapon.str + player.armor.str) + ')';
+      this.stats[1].item = 'INT: ' + player.baseInt + '(+' + (player.weapon["int"] + player.armor["int"]) + ')';
+      this.stats[2].item = 'AGI: ' + player.baseAgi + '(+' + (player.weapon.agi + player.armor.agi) + ')';
+      this.stats[3].item = 'ATK: ' + player.baseAttack + '(+' + (player.weapon.attack + player.armor.attack) + ')';
+      this.stats[4].item = 'DEF: ' + player.baseDefence + '(+' + (player.weapon.defence + player.armor.defence) + ')';
     }
   }, {
     key: "show",
@@ -1062,6 +1128,18 @@ function (_Box) {
         var h = STATUS_BAR_HEIGHT;
 
         _this2.drawBox(x, y, w, h, item, index, i);
+
+        if (i === 1) {
+          _this2.createBar(x, y, w, h, 2, player.exp, player.levelExp);
+        }
+
+        if (i === 2) {
+          _this2.createBar(x, y, w, h, 2, player.hp, player.hpMax);
+        }
+
+        if (i === 3) {
+          _this2.createBar(x, y, w, h, 2, player.mp, player.mpMax);
+        }
 
         if (_this2.frame % 2 === 0) {
           _this2.items[i].index++;
@@ -1083,18 +1161,104 @@ function (_Box) {
             _this2.stats[i].index++;
           }
         });
+        this.createEquipment(STATUS_WIDTH / 2 + STATUS_WIDTH, STATUS_TITLE_HEIGHT / 2 + STATUS_BAR_HEIGHT, STATUS_WIDTH, STATUS_TITLE_HEIGHT, player.weapon, this.equipments[0].index);
+        this.createEquipment(STATUS_WIDTH / 2 + STATUS_WIDTH + STATUS_WIDTH, STATUS_TITLE_HEIGHT / 2 + STATUS_BAR_HEIGHT, STATUS_WIDTH, STATUS_TITLE_HEIGHT, player.armor, this.equipments[0].index);
+
+        if (this.frame % 2 === 0) {
+          this.equipments[0].index++;
+        }
       } else {
         this.stats.forEach(function (_, i) {
           _this2.stats[i].index = 0;
+          _this2.equipments[0].index = 0;
         });
       }
 
       this.frame++; // spriteFont.showFont(this.text, this.x, this.y, this.w, this.h)
     }
   }, {
+    key: "createEquipment",
+    value: function createEquipment(x, y, w, h, equipment, index) {
+      var _this3 = this;
+
+      rectMode(CENTER);
+      stroke(0);
+      strokeWeight(1);
+      fill(255);
+      rect(x, y, w, h);
+      textLeading(0);
+      textAlign(CENTER, CENTER);
+      textFont(font);
+      textSize(this.fontSize);
+      fill(0);
+      stroke(0);
+      strokeWeight(1);
+      var textToShow = equipment.name.split('').slice(0, index).join('');
+      text(textToShow, x + this.fontSize / 8, y - this.fontSize / 8, w, h);
+      rectMode(CENTER);
+      stroke(0);
+      strokeWeight(1);
+      fill(255);
+      rect(x, y + h / 2 + w / 4, w, w / 2);
+      noSmooth();
+      imageMode(CENTER);
+      image(equipment.img, x, y + h / 2 + w / 4, w / 2, w / 2, 0, 0, 16, 16);
+      var stats = [];
+
+      if (equipment.attack > 0) {
+        stats.push('ATTACK +' + equipment.attack);
+      }
+
+      if (equipment.defence > 0) {
+        stats.push('DEFENCE +' + equipment.defence);
+      }
+
+      if (equipment.str > 0) {
+        stats.push('STR +' + equipment.str);
+      }
+
+      if (equipment["int"] > 0) {
+        stats.push('INT +' + equipment["int"]);
+      }
+
+      if (equipment.agi > 0) {
+        stats.push('AGI +' + equipment.agi);
+      }
+
+      stats.forEach(function (stat, i) {
+        stroke(0);
+        strokeWeight(1);
+        fill(255);
+        var textToShow = stat.split('').slice(0, index).join('');
+        rect(x, y + w / 4 + w / 2 - h / 2 + i * h, w, h);
+        fill(0);
+        text(textToShow, x + _this3.fontSize / 8, y - _this3.fontSize / 8 + w / 4 + w / 2 - h / 2 + i * h, w, h);
+      });
+    }
+  }, {
+    key: "createBar",
+    value: function createBar(x, y, w, h, padding, from, to) {
+      w = w - padding * 2;
+      h = h - padding * 2;
+      var percentage = from / to || 0;
+      var barW = w * percentage;
+      var barH = 10;
+      var barX = x - w / 2 + barW / 2;
+      var barY = y - h / 2 + barH / 2;
+      noFill();
+      stroke(0);
+      strokeWeight(1);
+      rect(x, barY, w, barH);
+      fill(0);
+      noStroke();
+      rect(barX, barY, barW, barH);
+    }
+  }, {
     key: "drawBox",
     value: function drawBox(x, y, w, h, item, index, i) {
       rectMode(CENTER);
+      stroke(0);
+      strokeWeight(1);
       fill(255);
       rect(x, y, w, h);
       textLeading(0);
@@ -1105,7 +1269,17 @@ function (_Box) {
       stroke(0);
       strokeWeight(1);
       var textToShow = item.split('').slice(0, index).join('');
-      text(textToShow, x + this.fontSize / 8, y - this.fontSize / 8, w, h);
+      text(textToShow, x + this.fontSize / 8, y - this.fontSize / 8, w, h); // image(
+      //     this.image,
+      //     this.x,
+      //     this.y,
+      //     this.currentWidth,
+      //     this.currentHeight,
+      //     0,
+      //     0,
+      //     16,
+      //     16
+      // )
 
       if (index > item.split('').length) {
         index = item.split('').length;
