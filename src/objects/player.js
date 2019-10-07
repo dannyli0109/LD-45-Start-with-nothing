@@ -80,7 +80,7 @@ class Player {
 
 
         this.baseAttack = this.str * 5
-        this.baseDefence = Math.ceil(this.agi * this.agi * 0.1)
+        this.baseDefence = Math.ceil(this.agi * 0.1)
 
         this.attack = this.baseAttack + this.weapon.attack + this.armor.attack
         this.defence = this.baseDefence + this.weapon.defence + this.armor.defence

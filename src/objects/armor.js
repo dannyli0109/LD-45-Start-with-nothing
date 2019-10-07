@@ -14,11 +14,11 @@ class Armor {
         switch (this.type) {
             case PLATE:
                 if (quality === RARE) {
-                    this.defence = Math.round(this.str * 0.8 + 20)
+                    this.defence = Math.round(player.str * 0.8 + 20)
                     this.img = plateArmorImage
                     this.name = 'Bikini Plate Armor'
                 } else {
-                    this.defence = Math.round(this.str * 5 + 10)
+                    this.defence = Math.round(player.str * 0.5 + 10)
                     this.img = plateArmorImage
                     this.name = 'Plate Armor'
                 }
