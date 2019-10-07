@@ -349,14 +349,14 @@ class BattleEvent {
                     width / 2,
                     dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight,
                     width, dialogueHeight,
-                    'BUT AT THE END...',
+                    'JUST KEEP GOING...',
                     20, false, this.dialogueTextSize
                 ))
                 this.dialogues.push(new DialogueBox(
                     width / 2,
                     dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight,
                     width, dialogueHeight,
-                    'THERE\'S NOTHING LEFT...',
+                    'AND GOING...',
                     20, false, this.dialogueTextSize
                 ))
                 this.dialogues.push(new DialogueBox(
