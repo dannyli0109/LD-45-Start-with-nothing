@@ -406,8 +406,8 @@ function () {
           this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, 'BUT YOU COULD NEVER GET TO THE TOP...', 20, false, this.dialogueTextSize));
           this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, 'LIKE A GAME DEVELOPER...', 20, false, this.dialogueTextSize));
           this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, 'A NEVER ENDING JOURNEY...', 20, false, this.dialogueTextSize));
-          this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, 'BUT AT THE END...', 20, false, this.dialogueTextSize));
-          this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, 'THERE\'S NOTHING LEFT...', 20, false, this.dialogueTextSize));
+          this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, 'JUST KEEP GOING...', 20, false, this.dialogueTextSize));
+          this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, 'AND GOING...', 20, false, this.dialogueTextSize));
           this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, '', 20, false, this.dialogueTextSize, function () {
             sceneManager.gameOver();
           }));
