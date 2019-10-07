@@ -13,6 +13,10 @@ let swordImage, handImage, bodyImage
 
 let plateArmorImage
 
+let mageImage
+
+let giantSwordGuyImage
+
 let icons = []
 
 function preload() {
@@ -25,6 +29,8 @@ function preload() {
     handImage = loadImage('./assets/hand.png')
     bodyImage = loadImage('./assets/body.png')
     plateArmorImage = loadImage('./assets/plate-armor.png')
+    mageImage = loadImage('./assets/mage.png')
+    giantSwordGuyImage = loadImage('./assets/giant-sword-guy.png')
 
     icons.push(...[iconBattle, iconEvent, iconOpportunity, iconBoss])
 }
@@ -34,6 +40,13 @@ function setup() {
     rectMode(CENTER)
     const canvas = createCanvas(WIDTH, HEIGHT)
     canvas.elt.id = 'game'
+    initGame()
+    // player = new Player()
+    // sceneManager = new SceneManager()
+    // currentScene = sceneManager.scenes[sceneManager.index]
+}
+
+function initGame() {
     player = new Player()
     sceneManager = new SceneManager()
     currentScene = sceneManager.scenes[sceneManager.index]

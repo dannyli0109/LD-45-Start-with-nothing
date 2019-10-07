@@ -23,4 +23,9 @@ const LEATHER = 2
 const NORMAL = 0
 const RARE = 1
 
+const WEAPON = 0
+const ARMOR = 1
 
+
+const GIANT_SWORD_GUY = 0
+const CREEP = 1

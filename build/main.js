@@ -9,6 +9,8 @@ var player; // icons
 var iconBattle, iconEvent, iconOpportunity, iconBoss;
 var swordImage, handImage, bodyImage;
 var plateArmorImage;
+var mageImage;
+var giantSwordGuyImage;
 var icons = [];
 
 function preload() {
@@ -21,6 +23,8 @@ function preload() {
   handImage = loadImage('./assets/hand.png');
   bodyImage = loadImage('./assets/body.png');
   plateArmorImage = loadImage('./assets/plate-armor.png');
+  mageImage = loadImage('./assets/mage.png');
+  giantSwordGuyImage = loadImage('./assets/giant-sword-guy.png');
   icons.push.apply(icons, [iconBattle, iconEvent, iconOpportunity, iconBoss]);
 }
 
@@ -29,6 +33,12 @@ function setup() {
   rectMode(CENTER);
   var canvas = createCanvas(WIDTH, HEIGHT);
   canvas.elt.id = 'game';
+  initGame(); // player = new Player()
+  // sceneManager = new SceneManager()
+  // currentScene = sceneManager.scenes[sceneManager.index]
+}
+
+function initGame() {
   player = new Player();
   sceneManager = new SceneManager();
   currentScene = sceneManager.scenes[sceneManager.index];
@@ -72,6 +82,10 @@ var CLOTH = 1;
 var LEATHER = 2;
 var NORMAL = 0;
 var RARE = 1;
+var WEAPON = 0;
+var ARMOR = 1;
+var GIANT_SWORD_GUY = 0;
+var CREEP = 1;
 "use strict";
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -128,6 +142,283 @@ function () {
   }]);
 
   return SpriteFont;
+}();
+"use strict";
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var BattleEvent =
+/*#__PURE__*/
+function () {
+  function BattleEvent(creep, selectionsTextArray) {
+    var _ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
+        _ref$row = _ref.row,
+        row = _ref$row === void 0 ? 2 : _ref$row,
+        _ref$col = _ref.col,
+        col = _ref$col === void 0 ? 2 : _ref$col,
+        _ref$paddingX = _ref.paddingX,
+        paddingX = _ref$paddingX === void 0 ? 20 : _ref$paddingX,
+        _ref$paddingY = _ref.paddingY,
+        paddingY = _ref$paddingY === void 0 ? 10 : _ref$paddingY,
+        _ref$dialoguePortion = _ref.dialoguePortion,
+        dialoguePortion = _ref$dialoguePortion === void 0 ? 0.1 : _ref$dialoguePortion,
+        _ref$creepPortion = _ref.creepPortion,
+        creepPortion = _ref$creepPortion === void 0 ? 0.5 : _ref$creepPortion,
+        _ref$buttonWidth = _ref.buttonWidth,
+        buttonWidth = _ref$buttonWidth === void 0 ? BUTTON_WIDTH : _ref$buttonWidth,
+        _ref$buttonHeight = _ref.buttonHeight,
+        buttonHeight = _ref$buttonHeight === void 0 ? BUTTON_HEIGHT : _ref$buttonHeight,
+        _ref$isIcon = _ref.isIcon,
+        isIcon = _ref$isIcon === void 0 ? false : _ref$isIcon,
+        _ref$results = _ref.results,
+        results = _ref$results === void 0 ? [] : _ref$results,
+        _ref$dialogueTextSize = _ref.dialogueTextSize,
+        dialogueTextSize = _ref$dialogueTextSize === void 0 ? 48 : _ref$dialogueTextSize;
+
+    _classCallCheck(this, BattleEvent);
+
+    this.dialoguesTextArray = [creep.name];
+    this.selectionsTextArray = selectionsTextArray;
+    this.height = height - STATUS_BAR_HEIGHT;
+    this.dialogues = [];
+    this.selections = [];
+    this.index = 0;
+    this.shouldEnd = false;
+    this.turn = 0;
+    this.creep = creep;
+    this.results = results;
+    this.dialoguePortion = dialoguePortion;
+    this.creepPortion = creepPortion;
+    this.buttonWidth = buttonWidth;
+    this.buttonHeight = buttonHeight;
+    this.paddingX = paddingX;
+    this.paddingY = paddingY;
+    this.width = width - this.paddingX * 2;
+    this.row = row;
+    this.col = col;
+    this.dialogueTextSize = dialogueTextSize;
+    this.isIcon = isIcon;
+    this.resolved = false;
+    this.createCreepPortion();
+    this.createDialogues();
+
+    if (this.isIcon) {
+      this.createIconSelections();
+    } else {
+      this.createSelections();
+    }
+  }
+
+  _createClass(BattleEvent, [{
+    key: "createCreepPortion",
+    value: function createCreepPortion() {
+      var creepBoxHeight = this.height * this.creepPortion;
+      this.creepBox = new ImageBox(width / 2, STATUS_BAR_HEIGHT + creepBoxHeight / 2, width, creepBoxHeight, this.creep.img);
+    }
+  }, {
+    key: "healthBar",
+    value: function healthBar() {
+      var creepBoxHeight = this.height * this.creepPortion;
+      var w = 128;
+      var barH = 10;
+      var barY = STATUS_BAR_HEIGHT + creepBoxHeight / 2 - 128 / 2 - 30;
+      var x = width / 2;
+      var healthPorporation = constrain(this.creep.hp / this.creep.hpMax, 0, 1);
+      var barW = healthPorporation * w;
+      var barX = x - w / 2 + barW / 2;
+      noFill();
+      stroke(0);
+      strokeWeight(1);
+      rect(x, barY, w, barH);
+      fill(0);
+      stroke(0);
+      strokeWeight(1);
+      rect(barX, barY, barW, barH);
+    }
+  }, {
+    key: "createDialogues",
+    value: function createDialogues() {
+      var _this = this;
+
+      var dialogueHeight = this.height * this.dialoguePortion;
+      var creepBoxHeight = this.height * this.creepPortion;
+      this.dialoguesTextArray.forEach(function (element) {
+        _this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, element, 20, false, _this.dialogueTextSize));
+      });
+    }
+  }, {
+    key: "createSelections",
+    value: function createSelections() {
+      var _this2 = this;
+
+      this.selectionsTextArray.forEach(function (element, index) {
+        var x = index % _this2.col;
+        var y = Math.floor(index / _this2.col);
+        var dialogueHeight = _this2.height * (_this2.dialoguePortion + _this2.creepPortion);
+        var containerHeight = _this2.height * (1 - _this2.dialoguePortion - _this2.creepPortion);
+        var rowHeight = containerHeight / _this2.row;
+        var shouldCenterX = index % _this2.col === 0 && _this2.selectionsTextArray.length - 1 - index === 0;
+        var shouldCenterY = Math.floor((_this2.selectionsTextArray.length - 1) / _this2.col) === 0;
+        var yCenter = containerHeight / 2 + STATUS_BAR_HEIGHT + dialogueHeight;
+        var buttonPadding = (width - _this2.buttonWidth * _this2.col - (_this2.col - 1) * _this2.paddingX) / 2;
+
+        _this2.selections.push(new SelectionBox(shouldCenterX ? width / 2 : buttonPadding + _this2.buttonWidth / 2 + x * (_this2.paddingX + _this2.buttonWidth), shouldCenterY ? yCenter : yCenter - rowHeight / 2 + y * rowHeight, _this2.buttonWidth, _this2.buttonHeight, element));
+      });
+    }
+  }, {
+    key: "createIconSelections",
+    value: function createIconSelections() {
+      var _this3 = this;
+
+      this.selectionsTextArray.forEach(function (element, index) {
+        var x = index % _this3.col;
+        var y = Math.floor(index / _this3.col);
+        var dialogueHeight = _this3.height * _this3.dialoguePortion;
+        var containerHeight = _this3.height * (1 - _this3.dialoguePortion);
+        var rowHeight = containerHeight / _this3.row;
+        var shouldCenterX = index % _this3.col === 0 && _this3.selectionsTextArray.length - 1 - index === 0;
+        var shouldCenterY = Math.floor((_this3.selectionsTextArray.length - 1) / _this3.col) === 0;
+        var yCenter = containerHeight / 2 + STATUS_BAR_HEIGHT + dialogueHeight;
+        var buttonPadding = (width - _this3.buttonWidth * _this3.col - (_this3.col - 1) * _this3.paddingX) / 2;
+
+        _this3.selections.push(new IconSelectionBox(shouldCenterX ? width / 2 : buttonPadding + _this3.buttonWidth / 2 + x * (_this3.paddingX + _this3.buttonWidth), shouldCenterY ? yCenter : yCenter - rowHeight / 2 + y * rowHeight, _this3.buttonWidth, _this3.buttonHeight, element));
+      });
+    }
+  }, {
+    key: "show",
+    value: function show() {
+      if (this.dialogues.length - 1 > this.index) {
+        this.dialogues[this.index].show();
+      } else {
+        if (this.dialogues.length > 0) {
+          // console.log(this.dialogues)
+          this.dialogues[this.dialogues.length - 1].show();
+        }
+
+        if (this.turn % 2 == 0 && !this.resolved) {
+          this.selections.forEach(function (selection) {
+            selection.show();
+          });
+        }
+      }
+
+      this.creepBox.show();
+      this.healthBar();
+    }
+  }, {
+    key: "attack",
+    value: function attack() {
+      var _this4 = this;
+
+      //this.creep.name + ' took ' + player.attack + ' damages!'
+      var dialogueHeight = this.height * this.dialoguePortion;
+      var creepBoxHeight = this.height * this.creepPortion; // currentScene.events[currentScene.index].creep.hp -= player.attack
+
+      this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, this.creep.name + ' took ' + constrain(player.attack - this.creep.defence, 0, Infinity) + ' damages!', 20, false, this.dialogueTextSize, function () {
+        currentScene.events[currentScene.index].creep.hp -= constrain(player.attack - currentScene.events[currentScene.index].creep.defence, 0, Infinity);
+        _this4.resolved = true;
+      })); // this.turn++
+    }
+  }, {
+    key: "creepAttack",
+    value: function creepAttack() {
+      var _this5 = this;
+
+      var dialogueHeight = this.height * this.dialoguePortion;
+      var creepBoxHeight = this.height * this.creepPortion;
+      this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, 'YOU took ' + constrain(this.creep.attack - player.defence, 0, Infinity) + ' damages!', 20, false, this.dialogueTextSize, function () {
+        player.hp -= constrain(_this5.creep.attack - player.defence, 0, Infinity);
+        _this5.resolved = true;
+      })); // this.turn++
+    }
+  }, {
+    key: "pressed",
+    value: function pressed() {
+      var _this6 = this;
+
+      if (this.shouldEnd) {
+        if (this.index < this.dialogues.length - 1) {
+          this.index++;
+          return;
+        }
+
+        return;
+      }
+
+      if (this.resolved) {
+        if (this.creep.hp <= 0) {
+          var dialogueHeight = this.height * this.dialoguePortion;
+          var creepBoxHeight = this.height * this.creepPortion;
+          var creep = currentScene.events[currentScene.index].creep;
+          this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, 'VICTORY!', 20, false, this.dialogueTextSize));
+          this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, 'Gain ' + Math.ceil(creep.exp) + ' experience!', 20, false, this.dialogueTextSize, function () {
+            player.exp += Math.ceil(creep.exp);
+          }));
+          this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, 'Gain ' + Math.ceil(creep.money) + ' gold!', 20, false, this.dialogueTextSize, function () {
+            player.money += Math.ceil(creep.money);
+          }));
+          this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT + creepBoxHeight, width, dialogueHeight, '', 20, false, this.dialogueTextSize, function () {
+            sceneManager.next();
+          }));
+          this.shouldEnd = true;
+
+          if (this.index < this.dialogues.length - 1) {
+            this.index++;
+          }
+
+          return;
+        }
+
+        if (player.hp <= 0) {
+          var _dialogueHeight = this.height * this.dialoguePortion;
+
+          var _creepBoxHeight = this.height * this.creepPortion;
+
+          this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, 'YOU DIED!', 20, false, this.dialogueTextSize));
+          this.dialogues.push(new DialogueBox(width / 2, _dialogueHeight / 2 + STATUS_BAR_HEIGHT + _creepBoxHeight, width, _dialogueHeight, '', 20, false, this.dialogueTextSize, function () {
+            sceneManager.gameOver();
+          }));
+          this.shouldEnd = true;
+
+          if (this.index < this.dialogues.length - 1) {
+            this.index++;
+          }
+
+          return;
+        }
+
+        this.resolved = false;
+        this.turn++;
+      } // console.log(this.turn % 2, this.resolved)
+
+
+      if (this.turn % 2 === 1) {
+        if (!this.resolved) {
+          this.creepAttack();
+        }
+      }
+
+      this.selections.forEach(function (selection) {
+        selection.pressed(function () {
+          if (_this6.turn % 2 === 0) {
+            if (!_this6.resolved) {
+              _this6.attack();
+            }
+          }
+        });
+      });
+
+      if (this.index < this.dialogues.length - 1) {
+        this.index++;
+      }
+    }
+  }]);
+
+  return BattleEvent;
 }();
 "use strict";
 
@@ -218,7 +509,9 @@ function () {
         _ref$isIcon = _ref.isIcon,
         isIcon = _ref$isIcon === void 0 ? false : _ref$isIcon,
         _ref$results = _ref.results,
-        results = _ref$results === void 0 ? [] : _ref$results;
+        results = _ref$results === void 0 ? [] : _ref$results,
+        _ref$dialogueTextSize = _ref.dialogueTextSize,
+        dialogueTextSize = _ref$dialogueTextSize === void 0 ? 48 : _ref$dialogueTextSize;
 
     _classCallCheck(this, SelectionEvent);
 
@@ -237,6 +530,7 @@ function () {
     this.width = width - this.paddingX * 2;
     this.row = row;
     this.col = col;
+    this.dialogueTextSize = dialogueTextSize;
     this.isIcon = isIcon;
     this.createDialogues();
 
@@ -254,7 +548,7 @@ function () {
 
       var dialogueHeight = this.height * this.dialoguePortion;
       this.dialoguesTextArray.forEach(function (element) {
-        _this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT, width, dialogueHeight, element, 20, false, 48));
+        _this.dialogues.push(new DialogueBox(width / 2, dialogueHeight / 2 + STATUS_BAR_HEIGHT, width, dialogueHeight, element, 20, false, _this.dialogueTextSize));
       });
     }
   }, {
@@ -364,6 +658,52 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
+var Creep =
+/*#__PURE__*/
+function () {
+  function Creep() {
+    var type = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : CREEP;
+
+    _classCallCheck(this, Creep);
+
+    this.attack = player.level * 5 + 1;
+    this.defence = 0;
+    this.hpMax = player.level * 10 + 1;
+    this.hp = this.hpMax;
+    this.img = mageImage;
+    this.name = 'MAGE';
+    this.exp = Math.ceil(player.levelExp * 0.5);
+    this.money = Math.ceil(player.level * 10 + 1);
+    this.type = type;
+    this.initStats();
+  }
+
+  _createClass(Creep, [{
+    key: "initStats",
+    value: function initStats() {
+      if (this.type === BOSS) {
+        this.attack = Math.round(player.level * 10 + 10 + player.defence * 0.5);
+        this.hpMax = Math.round(player.level * 50 + 20);
+        this.defence = Math.round(player.attack * 0.2);
+        this.name = 'GAINT SWORD GUY';
+        this.exp = Math.ceil(player.levelExp);
+        this.img = giantSwordGuyImage;
+        this.hp = this.hpMax;
+        this.money = Math.ceil(player.level * 50 + 1);
+      }
+    }
+  }]);
+
+  return Creep;
+}();
+"use strict";
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
 var Player =
 /*#__PURE__*/
 function () {
@@ -379,7 +719,7 @@ function () {
     this.baseInt = this["int"];
     this.baseAgi = this.agi;
     this.stats = [this.str, this["int"], this.agi];
-    this.money = 10;
+    this.money = 0;
     this.material = 0;
     this.mainStat = random(this.stats);
     this.exp = 0;
@@ -431,7 +771,8 @@ function () {
       this.level++;
       this.baseStr += Math.round(random(1, this.level));
       this.baseInt += Math.round(random(1, this.level));
-      this.baseAgi += Math.round(random(1, this.level)); // this.mainStat += (this.level - 1)
+      this.baseAgi += Math.round(random(1, this.level));
+      this.hp = this.hpMax; // this.mainStat += (this.level - 1)
 
       this.updateStats();
     }
@@ -442,7 +783,7 @@ function () {
       this["int"] = this.baseInt + this.weapon["int"] + this.armor["int"];
       this.agi = this.baseAgi + this.weapon.agi + this.armor.agi;
       this.baseAttack = this.str * 5;
-      this.baseDefence = Math.round(this.agi * this.agi * 0.1);
+      this.baseDefence = Math.ceil(this.agi * this.agi * 0.1);
       this.attack = this.baseAttack + this.weapon.attack + this.armor.attack;
       this.defence = this.baseDefence + this.weapon.defence + this.armor.defence;
       var newHp = this.str * this.str * 2 + 1;
@@ -527,26 +868,89 @@ function () {
         results: [function () {
           if (player.money < (Math.ceil(player.money * 0.8) === 0 ? 1 : Math.ceil(player.money * 0.8))) return;
           player.money -= Math.ceil(player.money * 0.8);
-          currentScene.events.push(new DialogueEvent(['HOMELESS: THANK YOU SO MUCH!!!']));
+          currentScene.events.push(new DialogueEvent(['HOMELESS: THANK YOU SO MUCH!!!', 'He gives you...']));
+          var equipment;
 
           if (Math.random() > 0.5) {
-            var weapon = new Weapon(SWORD, NORMAL);
-            player.equipWeapon(weapon);
+            equipment = new Weapon(SWORD, NORMAL);
+            currentScene.events.push(_this.equipSelection(equipment, WEAPON)); // player.equipWeapon(equipment)
           } else {
-            var armor = new Armor(PLATE, NORMAL);
-            player.equipArmor(armor);
-          }
+            equipment = new Armor(PLATE, NORMAL);
+            currentScene.events.push(_this.equipSelection(equipment, ARMOR)); // player.equipArmor(equipment)
+          } // currentScene.events.push()
 
-          currentScene.events.push();
+
           currentScene.index++;
         }, function () {
           _this.next();
         }]
       }]);
     }];
+    this.opportunity = [function () {
+      return _construct(SelectionEvent, [['Repeated Horizontal Jump competition...'], ['Have a look', 'Walk away'], {
+        paddingX: 50,
+        results: [function () {
+          currentScene.events.push(new DialogueEvent(['Gain 3 AGILITY']));
+          currentScene.index++;
+          player.baseAgi += 3;
+          player.updateStats();
+        }, function () {
+          _this.next();
+        }]
+      }]);
+    }];
+
+    this.equipSelection = function (equipment, type) {
+      var stats = [];
+
+      if (equipment.attack > 0) {
+        stats.push('ATTACK +' + equipment.attack);
+      }
+
+      if (equipment.defence > 0) {
+        stats.push('DEFENCE +' + equipment.defence);
+      }
+
+      if (equipment.str > 0) {
+        stats.push('STR +' + equipment.str);
+      }
+
+      if (equipment["int"] > 0) {
+        stats.push('INT +' + equipment["int"]);
+      }
+
+      if (equipment.agi > 0) {
+        stats.push('AGI +' + equipment.agi);
+      }
+
+      return _construct(SelectionEvent, [[equipment.name + '\n' + stats.join('\n')], ['Equip', 'Discard'], {
+        dialogueTextSize: 36,
+        paddingX: 50,
+        results: [function () {
+          if (type === WEAPON) {
+            player.equipWeapon(equipment);
+          }
+
+          if (type === ARMOR) {
+            player.equipArmor(equipment);
+          }
+
+          _this.next();
+        }, function () {
+          _this.next();
+        }]
+      }]);
+    };
   }
 
   _createClass(SceneManager, [{
+    key: "createBattle",
+    value: function createBattle(type) {
+      return _construct(BattleEvent, [new Creep(type), ['Attack', 'Ability'], {
+        paddingX: 50
+      }]);
+    }
+  }, {
     key: "createScenes",
     value: function createScenes() {
       this.createMainMenu();
@@ -586,7 +990,7 @@ function () {
       // ]))
 
       var events = [];
-      events.push(new DialogueEvent(['You have NOTHING...', 'You don\'t know where you are...', 'You are weak...', 'Even the weakest slime kills you in one hit...', 'But you want to stay alive...', 'To find the purpose of your pathetic life...', 'You walk and walk around this place...', 'After some time, you found serval paths in front of you...']));
+      events.push(new DialogueEvent(['You have NOTHING...', 'You don\'t know where you are...', 'You are weak...', 'Even the weakest slime kills you in one hit...', 'But you want to stay alive...', 'To find the purpose of your pathetic life...', 'You walk and walk around this place...', 'You found serval paths in front of you...']));
       events.push(new SelectionEvent(['You are gonna choose...'], [BATTLE, EVENT, OPPORTUNITY, BOSS], {
         isIcon: true,
         col: 4,
@@ -633,6 +1037,11 @@ function () {
       }
 
       currentScene = this.scenes[this.index];
+    }
+  }, {
+    key: "gameOver",
+    value: function gameOver() {
+      initGame();
     }
   }]);
 
@@ -832,6 +1241,7 @@ function (_Box) {
     var padding = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 20;
     var border = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : true;
     var fontSize = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : 24;
+    var cb = arguments.length > 8 && arguments[8] !== undefined ? arguments[8] : function () {};
 
     _classCallCheck(this, DialogueBox);
 
@@ -844,19 +1254,24 @@ function (_Box) {
     _this.index = 0;
     _this.frame = 0;
     _this.atTheEnd = false;
+    _this.cb = cb;
     return _this;
   }
 
   _createClass(DialogueBox, [{
     key: "show",
     value: function show() {
+      this.cb();
+
+      this.cb = function () {};
+
       rectMode(CENTER);
       fill(255);
       rect(this.x, this.y, this.w, this.h);
-      textLeading(0);
       textAlign(CENTER, CENTER);
       textFont(font);
       textSize(this.fontSize);
+      textLeading(this.fontSize);
       fill(0);
       stroke(0);
       strokeWeight(1);
@@ -953,6 +1368,21 @@ function (_Box) {
 
           break;
 
+        case BATTLE:
+          currentScene.events.push(sceneManager.createBattle(CREEP));
+          currentScene.index++;
+          break;
+
+        case BOSS:
+          currentScene.events.push(sceneManager.createBattle(BOSS));
+          currentScene.index++;
+          break;
+
+        case OPPORTUNITY:
+          currentScene.events.push(sceneManager.opportunity[0]());
+          currentScene.index++;
+          break;
+
         default:
           break;
       } // console.log(this.type)
@@ -962,6 +1392,68 @@ function (_Box) {
   }]);
 
   return IconSelectionBox;
+}(Box);
+"use strict";
+
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+var ImageBox =
+/*#__PURE__*/
+function (_Box) {
+  _inherits(ImageBox, _Box);
+
+  function ImageBox(x, y, w, h, image) {
+    var _this;
+
+    var imageWidth = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 128;
+    var imageHeight = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : 128;
+
+    _classCallCheck(this, ImageBox);
+
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(ImageBox).call(this, x, y, w, h));
+    _this.image = image;
+    _this.imageWidth = imageWidth;
+    _this.imageHeight = imageHeight * (24 / 16);
+    _this.frame = 0;
+    return _this;
+  }
+
+  _createClass(ImageBox, [{
+    key: "show",
+    value: function show() {
+      rectMode(CENTER);
+      fill(255);
+      rect(this.x, this.y, this.w, this.h);
+      noSmooth();
+      imageMode(CENTER);
+      image(this.image, this.x, this.y + 10, this.imageWidth, this.imageHeight, 0, 0, 16, 24);
+      this.frame++;
+    }
+  }, {
+    key: "pressed",
+    value: function pressed() {
+      if (!this.collide()) return false;
+      console.log('pressed dialogue box');
+    }
+  }]);
+
+  return ImageBox;
 }(Box);
 "use strict";
 
@@ -1240,7 +1732,7 @@ function (_Box) {
     value: function createBar(x, y, w, h, padding, from, to) {
       w = w - padding * 2;
       h = h - padding * 2;
-      var percentage = from / to || 0;
+      var percentage = constrain(from / to || 0, 0, 1);
       var barW = w * percentage;
       var barH = 10;
       var barX = x - w / 2 + barW / 2;

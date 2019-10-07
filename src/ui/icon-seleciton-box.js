@@ -47,6 +47,18 @@ class IconSelectionBox extends Box {
                 currentScene.index++
                 // sceneManager.next()
                 break;
+            case BATTLE:
+                currentScene.events.push(sceneManager.createBattle(CREEP))
+                currentScene.index++
+                break
+            case BOSS:
+                currentScene.events.push(sceneManager.createBattle(BOSS))
+                currentScene.index++
+                break
+            case OPPORTUNITY:
+                currentScene.events.push(sceneManager.opportunity[0]())
+                currentScene.index++
+                break;
             default:
                 break;
         }

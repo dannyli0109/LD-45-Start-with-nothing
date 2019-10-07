@@ -203,7 +203,7 @@ class StatusBar extends Box {
 
         w = w - padding * 2
         h = h - padding * 2
-        let percentage = from / to || 0
+        let percentage = constrain(from / to || 0, 0, 1)
         let barW = w * percentage
         let barH = 10
         let barX = x - w / 2 + barW / 2

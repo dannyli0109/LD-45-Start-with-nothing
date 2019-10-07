@@ -12,7 +12,7 @@ class Player {
         this.baseAgi = this.agi
 
         this.stats = [this.str, this.int, this.agi]
-        this.money = 10
+        this.money = 0
         this.material = 0
         this.mainStat = random(this.stats)
         this.exp = 0
@@ -64,6 +64,8 @@ class Player {
         this.baseStr += Math.round(random(1, this.level))
         this.baseInt += Math.round(random(1, this.level))
         this.baseAgi += Math.round(random(1, this.level))
+
+        this.hp = this.hpMax
         // this.mainStat += (this.level - 1)
         this.updateStats()
     }
@@ -78,7 +80,7 @@ class Player {
 
 
         this.baseAttack = this.str * 5
-        this.baseDefence = Math.round(this.agi * this.agi * 0.1)
+        this.baseDefence = Math.ceil(this.agi * this.agi * 0.1)
 
         this.attack = this.baseAttack + this.weapon.attack + this.armor.attack
         this.defence = this.baseDefence + this.weapon.defence + this.armor.defence

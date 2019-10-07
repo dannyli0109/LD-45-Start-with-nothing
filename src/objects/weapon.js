@@ -11,6 +11,7 @@ class Weapon {
         this.agi = 0
         this.int = 0
         this.img = handImage
+
         switch (this.type) {
             case SWORD:
                 if (quality === RARE) {

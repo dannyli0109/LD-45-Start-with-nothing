@@ -25,20 +25,27 @@ class SceneManager {
                                     currentScene.events.push(
                                         new DialogueEvent(
                                             [
-                                                'HOMELESS: THANK YOU SO MUCH!!!'
+                                                'HOMELESS: THANK YOU SO MUCH!!!',
+                                                'He gives you...'
                                             ]
                                         )
                                     )
 
+                                    let equipment
+
                                     if (Math.random() > 0.5) {
-                                        let weapon = new Weapon(SWORD, NORMAL)
-                                        player.equipWeapon(weapon)
+                                        equipment = new Weapon(SWORD, NORMAL)
+                                        currentScene.events.push(this.equipSelection(equipment, WEAPON))
+
+                                        // player.equipWeapon(equipment)
                                     } else {
-                                        let armor = new Armor(PLATE, NORMAL)
-                                        player.equipArmor(armor)
+                                        equipment = new Armor(PLATE, NORMAL)
+                                        currentScene.events.push(this.equipSelection(equipment, ARMOR))
+                                        // player.equipArmor(equipment)
                                     }
 
-                                    currentScene.events.push()
+
+                                    // currentScene.events.push()
                                     currentScene.index++
                                 },
                                 () => {
@@ -50,6 +57,106 @@ class SceneManager {
                 )
             }
         ]
+
+        this.opportunity = [
+            () => {
+                return new SelectionEvent(
+                    ...[
+                        [
+                            'Repeated Horizontal Jump competition...'
+                        ],
+                        [
+                            'Have a look',
+                            'Walk away'
+                        ],
+                        {
+                            paddingX: 50,
+                            results: [
+                                () => {
+                                    currentScene.events.push(
+                                        new DialogueEvent(
+                                            [
+                                                'Gain 3 AGILITY'
+                                            ]
+                                        )
+                                    )
+                                    currentScene.index++
+                                    player.baseAgi += 3
+                                    player.updateStats()
+                                },
+                                () => {
+                                    this.next()
+                                }
+                            ]
+                        }
+                    ]
+                )
+            }
+        ]
+
+        this.equipSelection = (equipment, type) => {
+            let stats = []
+            if (equipment.attack > 0) {
+                stats.push('ATTACK +' + equipment.attack)
+            }
+            if (equipment.defence > 0) {
+                stats.push('DEFENCE +' + equipment.defence)
+            }
+            if (equipment.str > 0) {
+                stats.push('STR +' + equipment.str)
+            }
+            if (equipment.int > 0) {
+                stats.push('INT +' + equipment.int)
+            }
+            if (equipment.agi > 0) {
+                stats.push('AGI +' + equipment.agi)
+            }
+            return new SelectionEvent(
+                ...[
+                    [
+                        equipment.name + '\n' + stats.join('\n')
+                    ],
+                    [
+                        'Equip',
+                        'Discard'
+                    ],
+                    {
+                        dialogueTextSize: 36,
+                        paddingX: 50,
+                        results: [
+                            () => {
+                                if (type === WEAPON) {
+                                    player.equipWeapon(equipment)
+                                }
+
+                                if (type === ARMOR) {
+                                    player.equipArmor(equipment)
+                                }
+                                this.next()
+                            },
+                            () => {
+                                this.next()
+                            }
+                        ]
+                    }
+                ]
+            )
+        }
+    }
+
+    createBattle(type) {
+        return new BattleEvent(
+            ...[
+                new Creep(type),
+                [
+                    'Attack',
+                    'Ability'
+                ],
+                {
+                    paddingX: 50
+                }
+            ]
+        )
     }
 
     createScenes() {
@@ -99,7 +206,7 @@ class SceneManager {
             'But you want to stay alive...',
             'To find the purpose of your pathetic life...',
             'You walk and walk around this place...',
-            'After some time, you found serval paths in front of you...'
+            'You found serval paths in front of you...'
         ]))
 
 
@@ -176,5 +283,9 @@ class SceneManager {
             this.createIconSelection()
         }
         currentScene = this.scenes[this.index]
+    }
+
+    gameOver() {
+        initGame()
     }
 }

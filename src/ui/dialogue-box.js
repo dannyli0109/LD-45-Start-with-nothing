@@ -1,5 +1,5 @@
 class DialogueBox extends Box {
-    constructor(x, y, w, h, text, padding = 20, border = true, fontSize = 24) {
+    constructor(x, y, w, h, text, padding = 20, border = true, fontSize = 24, cb = () => { }) {
         super(x, y, w, h)
         this.text = text
         this.padding = padding
@@ -9,17 +9,23 @@ class DialogueBox extends Box {
         this.index = 0
         this.frame = 0
         this.atTheEnd = false
+        this.cb = cb
+
     }
 
     show() {
+
+        this.cb()
+        this.cb = () => { }
+
         rectMode(CENTER)
         fill(255)
         rect(this.x, this.y, this.w, this.h)
 
-        textLeading(0)
         textAlign(CENTER, CENTER)
         textFont(font)
         textSize(this.fontSize)
+        textLeading(this.fontSize)
         fill(0)
         stroke(0)
         strokeWeight(1)

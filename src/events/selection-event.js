@@ -1,5 +1,5 @@
 class SelectionEvent {
-    constructor(dialoguesTextArray, selectionsTextArray, { row = 2, col = 2, paddingX = 20, paddingY = 10, dialoguePortion = 0.5, buttonWidth = BUTTON_WIDTH, buttonHeight = BUTTON_HEIGHT, isIcon = false, results = [] } = {}) {
+    constructor(dialoguesTextArray, selectionsTextArray, { row = 2, col = 2, paddingX = 20, paddingY = 10, dialoguePortion = 0.5, buttonWidth = BUTTON_WIDTH, buttonHeight = BUTTON_HEIGHT, isIcon = false, results = [], dialogueTextSize = 48 } = {}) {
         this.dialoguesTextArray = dialoguesTextArray
         this.selectionsTextArray = selectionsTextArray
         this.height = height - STATUS_BAR_HEIGHT
@@ -22,6 +22,8 @@ class SelectionEvent {
         this.row = row
         this.col = col
 
+        this.dialogueTextSize = dialogueTextSize
+
         this.isIcon = isIcon
 
         this.createDialogues()
@@ -40,7 +42,7 @@ class SelectionEvent {
             this.dialogues.push(new DialogueBox(
                 width / 2,
                 dialogueHeight / 2 + STATUS_BAR_HEIGHT,
-                width, dialogueHeight, element, 20, false, 48))
+                width, dialogueHeight, element, 20, false, this.dialogueTextSize))
         })
     }
 
